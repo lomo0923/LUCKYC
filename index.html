@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>儲值管理系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F3F4F6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .page-section {
+            display: none;
+            padding-bottom: 80px; /* Space for bottom nav/button */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        /* Custom Scrollbar hide */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%);
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <!-- Fixed Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-header shadow-sm border-b border-gray-100 h-16 flex items-center justify-between px-4 transition-all duration-300">
+        <div class="flex items-center">
+            <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center text-white font-bold mr-3 shadow-md">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <h1 id="page-title" class="text-lg font-bold text-gray-800">首頁</h1>
+        </div>
+        <button onclick="goToHome()" class="text-gray-400 hover:text-orange-500 transition-colors">
+            <i class="fa-solid fa-house text-xl"></i>
+        </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="pt-20 px-4 max-w-md mx-auto min-h-screen relative">
+        
+        <!-- HOME PAGE (Dashboard) -->
+        <div id="page-home" class="page-section active">
+            <div class="grid grid-cols-2 gap-4">
+                <!-- 購買 (Primary Action) -->
+                <button onclick="navTo('page-shop')" class="col-span-2 gradient-bg text-white p-6 rounded-3xl shadow-lg transform active:scale-95 transition-transform flex flex-col items-center justify-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-3xl"></i>
+                    <span class="text-xl font-bold">商品購買</span>
+                    <span class="text-xs opacity-90">結帳、扣款、紀錄</span>
+                </button>
+
+                <!-- Menu Items -->
+                <button onclick="navTo('page-customers')" class="bg-white p-5 rounded-2xl card-shadow flex flex-col items-center gap-2 active:bg-gray-50">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><i class="fa-solid fa-user-plus"></i></div>
+                    <span class="font-bold text-sm">客戶管理</span>
+                </button>
+
+                <button onclick="navTo('page-deposit')" class="bg-white p-5 rounded-2xl card-shadow flex flex-col items-center gap-2 active:bg-gray-50">
+                    <div class="w-10 h-10 rounded-full bg-green-100 text-green-500 flex items-center justify-center"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <span class="font-bold text-sm">儲值作業</span>
+                </button>
+
+                <button onclick="navTo('page-products')" class="bg-white p-5 rounded-2xl card-shadow flex flex-col items-center gap-2 active:bg-gray-50">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center"><i class="fa-solid fa-box-open"></i></div>
+                    <span class="font-bold text-sm">商品設定</span>
+                </button>
+
+                <button onclick="navTo('page-history')" class="bg-white p-5 rounded-2xl card-shadow flex flex-col items-center gap-2 active:bg-gray-50">
+                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <span class="font-bold text-sm">購買紀錄</span>
+                </button>
+            </div>
+
+            <!-- Settings / Google Sheet -->
+            <div class="mt-6">
+                <div class="bg-white rounded-2xl p-4 card-shadow">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i class="fa-brands fa-google text-green-600"></i> 設定與串接
+                    </h3>
+                    <div class="text-xs text-gray-500 mb-3">若需串接 Google Sheet，請貼上 Web App URL。</div>
+                    <input type="text" id="gsheet-url" placeholder="Google Script URL..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400 transition-colors">
+                    <button onclick="saveSettings()" class="mt-2 w-full bg-gray-800 text-white text-sm py-2 rounded-lg">儲存設定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. CUSTOMER PAGE -->
+        <div id="page-customers" class="page-section">
+            <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
+                <h3 class="font-bold text-lg mb-4 text-orange-500">新增/修改客戶</h3>
+                <input type="hidden" id="cust-id">
+                <div class="space-y-3">
+                    <input type="text" id="cust-name" placeholder="姓名" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
+                    <input type="tel" id="cust-phone" placeholder="電話" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
+                    <input type="text" id="cust-address" placeholder="地址" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
+                    <div class="flex gap-2">
+                        <button onclick="saveCustomer()" class="flex-1 bg-orange-500 text-white py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">儲存客戶</button>
+                        <button onclick="clearCustomerForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-gray-600 mb-2 pl-1">客戶列表 (餘額查詢)</h3>
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                <input type="text" id="cust-search" oninput="renderCustomerList()" placeholder="搜尋姓名或電話..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border-none shadow-sm mb-4">
+            </div>
+            <div id="customer-list" class="space-y-3">
+                <!-- JS Generated -->
+            </div>
+        </div>
+
+        <!-- 2. DEPOSIT PAGE -->
+        <div id="page-deposit" class="page-section">
+            <div class="bg-white rounded-2xl p-5 card-shadow mb-4">
+                <label class="block text-sm font-bold text-gray-500 mb-1">選擇客戶</label>
+                <select id="deposit-cust-select" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 font-bold text-gray-700">
+                    <option value="">請選擇...</option>
+                    <!-- JS Generated -->
+                </select>
+
+                <label class="block text-sm font-bold text-gray-500 mb-1">儲值金額</label>
+                <input type="number" id="deposit-amount" placeholder="例如: 1000" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 text-xl font-bold text-orange-600">
+
+                <label class="block text-sm font-bold text-gray-500 mb-1">贈送金額 (手動)</label>
+                <input type="number" id="deposit-bonus" placeholder="例如: 100" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-6">
+
+                <button onclick="processDeposit()" class="w-full gradient-bg text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform">
+                    確認儲值
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. PRODUCT PAGE -->
+        <div id="page-products" class="page-section">
+            <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
+                <h3 class="font-bold text-lg mb-4 text-purple-600">商品管理</h3>
+                <input type="hidden" id="prod-id">
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <input type="text" id="prod-name" placeholder="商品名稱" class="col-span-2 bg-gray-50 p-3 rounded-xl border-none">
+                    <input type="number" id="prod-price" placeholder="價格" class="col-span-1 bg-gray-50 p-3 rounded-xl border-none">
+                </div>
+                <div class="flex items-center gap-2 mb-3">
+                    <input type="checkbox" id="prod-hidden" class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500">
+                    <label for="prod-hidden" class="text-sm text-gray-600">暫時隱藏下架</label>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="saveProduct()" class="flex-1 bg-purple-500 text-white py-3 rounded-xl font-bold shadow-md">儲存商品</button>
+                    <button onclick="clearProductForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button>
+                </div>
+            </div>
+
+            <div id="product-list" class="space-y-3">
+                <!-- JS Generated -->
+            </div>
+        </div>
+
+        <!-- 5. SHOP PAGE -->
+        <div id="page-shop" class="page-section">
+            <!-- Customer Selector -->
+            <div class="bg-white rounded-2xl p-4 card-shadow mb-4 sticky top-20 z-10 border border-orange-100">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-bold text-gray-500">購買人</label>
+                    <span id="shop-balance-display" class="text-sm font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg">餘額: $0</span>
+                </div>
+                <select id="shop-cust-select" onchange="updateShopBalance()" class="w-full bg-gray-50 p-2 rounded-lg border-none font-bold text-gray-800">
+                    <option value="">-- 訪客 / 選擇會員 --</option>
+                    <!-- JS Generated -->
+                </select>
+            </div>
+
+            <h3 class="font-bold text-gray-600 mb-2 pl-1">選擇商品</h3>
+            <div id="shop-product-list" class="grid grid-cols-1 gap-3 mb-6">
+                <!-- JS Generated Products with +/- -->
+            </div>
+
+            <!-- Cart Summary & Checkout -->
+            <div class="bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] fixed bottom-0 left-0 right-0 p-5 z-40 max-w-md mx-auto">
+                <div class="flex justify-between items-end mb-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <div class="text-xs text-gray-400">總金額</div>
+                        <div class="text-3xl font-bold text-gray-800">$<span id="cart-total">0</span></div>
+                    </div>
+                    <div class="text-right">
+                        <label class="text-xs text-gray-400 block mb-1">付款方式</label>
+                        <select id="payment-method" class="bg-gray-100 border-none rounded-lg text-sm p-1 font-bold text-gray-700">
+                            <option value="cash">💵 現金</option>
+                            <option value="linepay">📱 LINE PAY</option>
+                            <option value="other">💳 第三方支付</option>
+                            <option value="stored">💰 儲值金扣款</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="processCheckout()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2">
+                    <span>確認結帳</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+            <!-- Spacer for fixed bottom cart -->
+            <div class="h-40"></div>
+        </div>
+
+        <!-- 6. HISTORY PAGE -->
+        <div id="page-history" class="page-section">
+            <h3 class="font-bold text-gray-600 mb-2 pl-1">最近交易紀錄</h3>
+            <div id="history-list" class="space-y-3">
+                <!-- JS Generated -->
+            </div>
+        </div>
+
+        <!-- GLOBAL: Return Home Button (Inside pages) -->
+        <div id="btn-return-home" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 hidden">
+            <button onclick="goToHome()" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-house"></i> 返回首頁
+            </button>
+        </div>
+
+    </main>
+
+    <!-- MODAL: Result & Copy -->
+    <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transform scale-100 transition-transform">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">操作成功</h3>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 relative group">
+                <textarea id="copy-target" class="w-full bg-transparent border-none text-sm text-gray-600 h-32 resize-none focus:ring-0" readonly></textarea>
+                <div class="absolute top-2 right-2 text-xs text-gray-400">預覽</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="copyText()" class="bg-gray-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <i class="fa-regular fa-copy"></i> 複製文字
+                </button>
+                <button onclick="closeModal()" class="bg-gray-200 text-gray-700 py-3 rounded-xl font-bold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STORE ---
+        let customers = JSON.parse(localStorage.getItem('sm_customers')) || [];
+        let products = JSON.parse(localStorage.getItem('sm_products')) || [];
+        let transactions = JSON.parse(localStorage.getItem('sm_transactions')) || [];
+        let appSettings = JSON.parse(localStorage.getItem('sm_settings')) || { sheetUrl: '' };
+
+        // Cart State
+        let cart = {}; // { productId: qty }
+
+        // --- NAVIGATION ---
+        function navTo(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            // Title Update
+            const titles = {
+                'page-home': '首頁',
+                'page-customers': '客戶管理',
+                'page-deposit': '儲值中心',
+                'page-products': '商品設定',
+                'page-shop': '商品購買',
+                'page-history': '購買紀錄'
+            };
+            document.getElementById('page-title').textContent = titles[pageId];
+            window.scrollTo(0, 0);
+
+            // Toggle "Return Home" Button
+            const homeBtn = document.getElementById('btn-return-home');
+            if(pageId === 'page-home') {
+                homeBtn.classList.add('hidden');
+            } else {
+                homeBtn.classList.remove('hidden');
+                // Page specific init
+                if(pageId === 'page-customers') renderCustomerList();
+                if(pageId === 'page-products') renderProductList();
+                if(pageId === 'page-shop') initShop();
+                if(pageId === 'page-deposit') initDeposit();
+                if(pageId === 'page-history') renderHistory();
+            }
+        }
+
+        function goToHome() {
+            navTo('page-home');
+        }
+
+        // --- SETTINGS ---
+        function saveSettings() {
+            const url = document.getElementById('gsheet-url').value.trim();
+            appSettings.sheetUrl = url;
+            localStorage.setItem('sm_settings', JSON.stringify(appSettings));
+            alert('設定已儲存！');
+        }
+
+        // --- CUSTOMER LOGIC ---
+        function saveCustomer() {
+            const id = document.getElementById('cust-id').value;
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const address = document.getElementById('cust-address').value.trim();
+
+            if (!name) return alert('請輸入姓名');
+
+            if (id) {
+                // Edit
+                const idx = customers.findIndex(c => c.id == id);
+                if (idx > -1) {
+                    customers[idx] = { ...customers[idx], name, phone, address };
+                }
+            } else {
+                // Add
+                const newCust = {
+                    id: Date.now().toString(),
+                    name,
+                    phone,
+                    address,
+                    balance: 0,
+                    joinedAt: new Date().toISOString()
+                };
+                customers.push(newCust);
+            }
+
+            localStorage.setItem('sm_customers', JSON.stringify(customers));
+            clearCustomerForm();
+            renderCustomerList();
+            showResultModal('客戶資料已更新', `【客戶資料更新】\n姓名：${name}\n電話：${phone}\n地址：${address}`);
+            syncToGoogleSheet('customer_update', {name, phone, address});
+        }
+
+        function deleteCustomer(id) {
+            if(confirm('確定要刪除此客戶嗎？資料將無法復原。')) {
+                customers = customers.filter(c => c.id != id);
+                localStorage.setItem('sm_customers', JSON.stringify(customers));
+                renderCustomerList();
+            }
+        }
+
+        function editCustomer(id) {
+            const cust = customers.find(c => c.id == id);
+            if(cust) {
+                document.getElementById('cust-id').value = cust.id;
+                document.getElementById('cust-name').value = cust.name;
+                document.getElementById('cust-phone').value = cust.phone;
+                document.getElementById('cust-address').value = cust.address;
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function clearCustomerForm() {
+            document.getElementById('cust-id').value = '';
+            document.getElementById('cust-name').value = '';
+            document.getElementById('cust-phone').value = '';
+            document.getElementById('cust-address').value = '';
+        }
+
+        function renderCustomerList() {
+            const listEl = document.getElementById('customer-list');
+            const search = document.getElementById('cust-search').value.toLowerCase();
+            listEl.innerHTML = '';
+
+            customers.forEach(c => {
+                if(c.name.toLowerCase().includes(search) || c.phone.includes(search)) {
+                    const el = document.createElement('div');
+                    el.className = 'bg-white p-4 rounded-2xl card-shadow flex justify-between items-center';
+                    el.innerHTML = `
+                        <div>
+                            <div class="font-bold text-gray-800 text-lg">${c.name}</div>
+                            <div class="text-sm text-gray-400 mb-1">${c.phone}</div>
+                            <div class="text-xs text-gray-400">${c.address || '無地址'}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-orange-500 text-xl mb-2">$${c.balance}</div>
+                            <div class="flex gap-2">
+                                <button onclick="editCustomer('${c.id}')" class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteCustomer('${c.id}')" class="bg-red-100 text-red-600 w-8 h-8 rounded-full"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    listEl.appendChild(el);
+                }
+            });
+        }
+
+        // --- PRODUCT LOGIC ---
+        function saveProduct() {
+            const id = document.getElementById('prod-id').value;
+            const name = document.getElementById('prod-name').value.trim();
+            const price = parseInt(document.getElementById('prod-price').value) || 0;
+            const hidden = document.getElementById('prod-hidden').checked;
+
+            if (!name) return alert('請輸入商品名稱');
+
+            if (id) {
+                const idx = products.findIndex(p => p.id == id);
+                if (idx > -1) products[idx] = { ...products[idx], name, price, hidden };
+            } else {
+                products.push({ id: Date.now().toString(), name, price, hidden });
+            }
+
+            localStorage.setItem('sm_products', JSON.stringify(products));
+            clearProductForm();
+            renderProductList();
+        }
+
+        function clearProductForm() {
+            document.getElementById('prod-id').value = '';
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-hidden').checked = false;
+        }
+
+        function deleteProduct(id) {
+            if(confirm('刪除商品？')) {
+                products = products.filter(p => p.id != id);
+                localStorage.setItem('sm_products', JSON.stringify(products));
+                renderProductList();
+            }
+        }
+
+        function editProduct(id) {
+            const p = products.find(x => x.id == id);
+            if(p) {
+                document.getElementById('prod-id').value = p.id;
+                document.getElementById('prod-name').value = p.name;
+                document.getElementById('prod-price').value = p.price;
+                document.getElementById('prod-hidden').checked = p.hidden;
+                window.scrollTo(0,0);
+            }
+        }
+
+        function renderProductList() {
+            const listEl = document.getElementById('product-list');
+            listEl.innerHTML = '';
+            products.forEach(p => {
+                const el = document.createElement('div');
+                el.className = `bg-white p-4 rounded-2xl card-shadow flex justify-between items-center ${p.hidden ? 'opacity-50 grayscale' : ''}`;
+                el.innerHTML = `
+                    <div>
+                        <div class="font-bold text-gray-800">${p.name} ${p.hidden ? '(已隱藏)' : ''}</div>
+                        <div class="text-orange-500 font-bold">$${p.price}</div>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="editProduct('${p.id}')" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm">修改</button>
+                         <button onclick="deleteProduct('${p.id}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-sm">刪除</button>
+                    </div>
+                `;
+                listEl.appendChild(el);
+            });
+        }
+
+        // --- DEPOSIT LOGIC ---
+        function initDeposit() {
+            const sel = document.getElementById('deposit-cust-select');
+            sel.innerHTML = '<option value="">請選擇客戶...</option>';
+            customers.forEach(c => {
+                sel.innerHTML += `<option value="${c.id}">${c.name} (餘額:${c.balance})</option>`;
+            });
+            document.getElementById('deposit-amount').value = '';
+            document.getElementById('deposit-bonus').value = '';
+        }
+
+        function processDeposit() {
+            const custId = document.getElementById('deposit-cust-select').value;
+            const amount = parseInt(document.getElementById('deposit-amount').value) || 0;
+            const bonus = parseInt(document.getElementById('deposit-bonus').value) || 0;
+
+            if(!custId) return alert('請選擇客戶');
+            if(amount <= 0 && bonus <= 0) return alert('請輸入金額');
+
+            const custIdx = customers.findIndex(c => c.id == custId);
+            const oldBalance = customers[custIdx].balance;
+            const totalAdd = amount + bonus;
+            customers[custIdx].balance += totalAdd;
+
+            // Record Transaction
+            const record = {
+                id: Date.now().toString(),
+                date: new Date().toLocaleString(),
+                type: 'deposit',
+                custId: custId,
+                custName: customers[custIdx].name,
+                details: `儲值: ${amount}, 贈送: ${bonus}`,
+                amount: totalAdd,
+                paymentMethod: 'cash' // Deposit usually cash
+            };
+            transactions.unshift(record);
+            
+            localStorage.setItem('sm_customers', JSON.stringify(customers));
+            localStorage.setItem('sm_transactions', JSON.stringify(transactions));
+
+            const copyText = `【儲值成功通知】\n姓名：${customers[custIdx].name}\n儲值金額：${amount}\n贈送金額：${bonus}\n----------------\n原餘額：${oldBalance}\n目前餘額：${customers[custIdx].balance}\n謝謝您的光臨！`;
+            
+            showResultModal('儲值成功', copyText);
+            syncToGoogleSheet('deposit', record);
+            initDeposit(); // Reset form
+        }
+
+        // --- SHOP & CART LOGIC ---
+        function initShop() {
+            const sel = document.getElementById('shop-cust-select');
+            sel.innerHTML = '<option value="">-- 訪客 / 選擇會員 --</option>';
+            customers.forEach(c => {
+                sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+            updateShopBalance();
+
+            const listEl = document.getElementById('shop-product-list');
+            listEl.innerHTML = '';
+            products.filter(p => !p.hidden).forEach(p => {
+                cart[p.id] = 0; // Reset cart for this view
+                const el = document.createElement('div');
+                el.className = 'bg-white p-4 rounded-2xl card-shadow flex justify-between items-center';
+                el.innerHTML = `
+                    <div>
+                        <div class="font-bold text-gray-800">${p.name}</div>
+                        <div class="text-orange-500 font-bold">$${p.price}</div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                        <button onclick="updateCart('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-600 font-bold hover:bg-red-50 hover:text-red-500 transition-colors">-</button>
+                        <span id="qty-${p.id}" class="w-6 text-center font-bold text-gray-700">0</span>
+                        <button onclick="updateCart('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-orange-500 font-bold hover:bg-orange-50 transition-colors">+</button>
+                    </div>
+                `;
+                listEl.appendChild(el);
+            });
+            calculateTotal();
+        }
+
+        function updateShopBalance() {
+            const custId = document.getElementById('shop-cust-select').value;
+            const display = document.getElementById('shop-balance-display');
+            if(custId) {
+                const c = customers.find(x => x.id == custId);
+                display.textContent = `餘額: $${c.balance}`;
+                display.classList.remove('hidden');
+                // Auto select stored value if customer selected
+                document.getElementById('payment-method').value = 'stored';
+            } else {
+                display.textContent = '';
+                display.classList.add('hidden');
+                document.getElementById('payment-method').value = 'cash';
+            }
+        }
+
+        function updateCart(pid, delta) {
+            if(!cart[pid]) cart[pid] = 0;
+            cart[pid] += delta;
+            if(cart[pid] < 0) cart[pid] = 0;
+            document.getElementById(`qty-${pid}`).textContent = cart[pid];
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            products.forEach(p => {
+                if(cart[p.id]) total += p.price * cart[p.id];
+            });
+            document.getElementById('cart-total').textContent = total;
+            return total;
+        }
+
+        function processCheckout() {
+            const total = calculateTotal();
+            if(total === 0) return alert('購物車是空的');
+
+            const custId = document.getElementById('shop-cust-select').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            let custName = '訪客';
+            let custObj = null;
+            let custIdx = -1;
+
+            if(custId) {
+                custIdx = customers.findIndex(c => c.id == custId);
+                custObj = customers[custIdx];
+                custName = custObj.name;
+            }
+
+            // Stored Value Check
+            if(paymentMethod === 'stored') {
+                if(!custObj) return alert('請選擇客戶以使用儲值金扣款');
+                if(custObj.balance < total) return alert(`餘額不足！目前餘額: ${custObj.balance}, 需要: ${total}`);
+                
+                // Deduct
+                customers[custIdx].balance -= total;
+                localStorage.setItem('sm_customers', JSON.stringify(customers));
+            }
+
+            // Build Details String
+            let detailItems = [];
+            products.forEach(p => {
+                if(cart[p.id] > 0) detailItems.push(`${p.name} x${cart[p.id]}`);
+            });
+            const detailsStr = detailItems.join(', ');
+
+            // Record
+            const record = {
+                id: Date.now().toString(),
+                date: new Date().toLocaleString(),
+                type: 'purchase',
+                custId: custId || 'guest',
+                custName: custName,
+                details: detailsStr,
+                amount: total,
+                paymentMethod: paymentMethod
+            };
+            transactions.unshift(record);
+            localStorage.setItem('sm_transactions', JSON.stringify(transactions));
+
+            // Generate Copy Text
+            let paymentText = {
+                'cash': '現金', 'linepay': 'LINE PAY', 'other': '第三方支付', 'stored': '儲值金扣款'
+            }[paymentMethod];
+
+            let copyText = `【購買明細】\n日期：${record.date}\n客戶：${custName}\n品項：\n${detailItems.join('\n')}\n----------------\n總金額：${total}\n付款方式：${paymentText}`;
+            if(paymentMethod === 'stored' && custObj) {
+                copyText += `\n目前餘額：${customers[custIdx].balance}`;
+            }
+
+            showResultModal('結帳成功', copyText);
+            syncToGoogleSheet('purchase', record);
+            
+            // Reset
+            initShop();
+        }
+
+        // --- HISTORY LOGIC ---
+        function renderHistory() {
+            const listEl = document.getElementById('history-list');
+            listEl.innerHTML = '';
+            transactions.slice(0, 50).forEach(t => { // Show last 50
+                const isDeposit = t.type === 'deposit';
+                const icon = isDeposit ? 'fa-circle-dollar-to-slot' : 'fa-bag-shopping';
+                const colorClass = isDeposit ? 'text-green-500 bg-green-50' : 'text-orange-500 bg-orange-50';
+                const sign = isDeposit ? '+' : '-'; // Although purchase records positive amount, conceptually it's spend
+                
+                const el = document.createElement('div');
+                el.className = 'bg-white p-4 rounded-2xl card-shadow flex gap-3 items-start';
+                el.innerHTML = `
+                    <div class="w-10 h-10 rounded-full ${colorClass} flex items-center justify-center shrink-0">
+                        <i class="fa-solid ${icon}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <span class="font-bold text-gray-800">${t.custName}</span>
+                            <span class="font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">$${t.amount}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">${t.date}</div>
+                        <div class="text-sm text-gray-600 mt-1 break-words bg-gray-50 p-2 rounded-lg">${t.details}</div>
+                        <div class="text-xs text-gray-400 mt-1 text-right">付款: ${t.paymentMethod}</div>
+                    </div>
+                `;
+                listEl.appendChild(el);
+            });
+        }
+
+        // --- UTILS: MODAL & COPY & GOOGLE SHEET ---
+        function showResultModal(title, text) {
+            document.querySelector('#result-modal h3').textContent = title;
+            document.getElementById('copy-target').value = text;
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+
+        function copyText() {
+            const copyText = document.getElementById("copy-target");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile
+            
+            try {
+                navigator.clipboard.writeText(copyText.value).then(() => {
+                    alert("複製成功！");
+                });
+            } catch (err) {
+                // Fallback
+                document.execCommand('copy');
+                alert("複製成功！");
+            }
+        }
+
+        function syncToGoogleSheet(action, data) {
+            if(!appSettings.sheetUrl) return;
+
+            // This is a "fire and forget" or basic fetch. 
+            // In a real scenario, you need to handle CORS. 
+            // The best way for simple usage is using 'no-cors' mode with Google Script Web App
+            // OR use a hidden iframe/form submission technique.
+            
+            // Building a payload
+            const payload = new URLSearchParams();
+            payload.append('action', action);
+            payload.append('data', JSON.stringify(data));
+
+            fetch(appSettings.sheetUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Important for Google Script execution from client side without complex setup
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: payload
+            }).then(() => {
+                console.log('Sent to Google Sheet');
+            }).catch(e => console.error('Sheet Sync Error', e));
+        }
+
+        // --- INIT ---
+        document.getElementById('gsheet-url').value = appSettings.sheetUrl;
+        
+        // Initial load check
+        if(customers.length === 0 && products.length === 0) {
+            // Demo Data
+            customers.push({id: '1', name: '王小明', phone: '0912345678', address: '台北市信義區', balance: 500, joinedAt: new Date().toISOString()});
+            products.push({id: '1', name: '洗髮精', price: 300, hidden: false});
+            products.push({id: '2', name: '護髮素', price: 450, hidden: false});
+            products.push({id: '3', name: '剪髮服務', price: 500, hidden: false});
+            localStorage.setItem('sm_customers', JSON.stringify(customers));
+            localStorage.setItem('sm_products', JSON.stringify(products));
+        }
+    </script>
+</body>
+</html>
