@@ -19,7 +19,7 @@
         }
         .page-section {
             display: none;
-            padding-bottom: 80px; /* Space for bottom nav/button */
+            padding-bottom: 220px; /* Increased padding for larger bottom cart */
             animation: fadeIn 0.3s ease-in-out;
         }
         .page-section.active {
@@ -47,6 +47,15 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
+        .chip-active {
+            background-color: #FF6B6B;
+            color: white;
+        }
+        .chip-inactive {
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #eee;
+        }
     </style>
 </head>
 <body class="text-gray-700">
@@ -68,7 +77,7 @@
     <main class="pt-20 px-4 max-w-md mx-auto min-h-screen relative">
         
         <!-- HOME PAGE (Dashboard) -->
-        <div id="page-home" class="page-section active">
+        <div id="page-home" class="page-section active" style="padding-bottom: 80px;">
             <div class="grid grid-cols-2 gap-4">
                 <!-- 購買 (Primary Action) -->
                 <button onclick="navTo('page-shop')" class="col-span-2 gradient-bg text-white p-6 rounded-3xl shadow-lg transform active:scale-95 transition-transform flex flex-col items-center justify-center gap-2">
@@ -113,7 +122,7 @@
         </div>
 
         <!-- 1. CUSTOMER PAGE -->
-        <div id="page-customers" class="page-section">
+        <div id="page-customers" class="page-section" style="padding-bottom: 80px;">
             <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
                 <h3 class="font-bold text-lg mb-4 text-orange-500">新增/修改客戶</h3>
                 <input type="hidden" id="cust-id">
@@ -139,7 +148,7 @@
         </div>
 
         <!-- 2. DEPOSIT PAGE -->
-        <div id="page-deposit" class="page-section">
+        <div id="page-deposit" class="page-section" style="padding-bottom: 80px;">
             <div class="bg-white rounded-2xl p-5 card-shadow mb-4">
                 <label class="block text-sm font-bold text-gray-500 mb-1">選擇客戶</label>
                 <select id="deposit-cust-select" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 font-bold text-gray-700">
@@ -160,18 +169,44 @@
         </div>
 
         <!-- 4. PRODUCT PAGE -->
-        <div id="page-products" class="page-section">
+        <div id="page-products" class="page-section" style="padding-bottom: 80px;">
+            
+            <!-- Category Management Toggle -->
+            <div class="flex justify-end mb-2">
+                <button onclick="toggleCategoryManager()" class="text-sm text-purple-600 font-bold bg-purple-50 px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-list-ul"></i> 管理分類
+                </button>
+            </div>
+
+            <!-- Category Manager (Hidden by default) -->
+            <div id="category-manager" class="hidden bg-white rounded-2xl p-4 card-shadow mb-4 border border-purple-100">
+                <h4 class="font-bold text-gray-700 mb-2">新增/刪除分類</h4>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="new-cat-name" placeholder="新分類名稱" class="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-sm">
+                    <button onclick="addCategory()" class="bg-purple-500 text-white px-4 rounded-lg text-sm font-bold">新增</button>
+                </div>
+                <div id="category-list-edit" class="flex flex-wrap gap-2">
+                    <!-- JS Generated Chips with Delete -->
+                </div>
+            </div>
+
+            <!-- Product Form -->
             <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
                 <h3 class="font-bold text-lg mb-4 text-purple-600">商品管理</h3>
                 <input type="hidden" id="prod-id">
+                
+                <div class="mb-3">
+                    <label class="block text-xs text-gray-400 mb-1">商品分類</label>
+                    <select id="prod-category" class="w-full bg-gray-50 p-3 rounded-xl border-none text-gray-700 font-bold">
+                        <!-- JS Generated -->
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-3 gap-3 mb-3">
                     <input type="text" id="prod-name" placeholder="商品名稱" class="col-span-2 bg-gray-50 p-3 rounded-xl border-none">
                     <input type="number" id="prod-price" placeholder="價格" class="col-span-1 bg-gray-50 p-3 rounded-xl border-none">
                 </div>
-                <div class="flex items-center gap-2 mb-3">
-                    <input type="checkbox" id="prod-hidden" class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500">
-                    <label for="prod-hidden" class="text-sm text-gray-600">暫時隱藏下架</label>
-                </div>
+                
                 <div class="flex gap-2">
                     <button onclick="saveProduct()" class="flex-1 bg-purple-500 text-white py-3 rounded-xl font-bold shadow-md">儲存商品</button>
                     <button onclick="clearProductForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button>
@@ -186,7 +221,7 @@
         <!-- 5. SHOP PAGE -->
         <div id="page-shop" class="page-section">
             <!-- Customer Selector -->
-            <div class="bg-white rounded-2xl p-4 card-shadow mb-4 sticky top-20 z-10 border border-orange-100">
+            <div class="bg-white rounded-2xl p-4 card-shadow mb-4 sticky top-16 z-20 border border-orange-100">
                 <div class="flex justify-between items-center mb-2">
                     <label class="text-sm font-bold text-gray-500">購買人</label>
                     <span id="shop-balance-display" class="text-sm font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg">餘額: $0</span>
@@ -197,21 +232,45 @@
                 </select>
             </div>
 
-            <h3 class="font-bold text-gray-600 mb-2 pl-1">選擇商品</h3>
+            <!-- Category Filter Chips -->
+            <div class="flex overflow-x-auto gap-2 mb-4 no-scrollbar pb-1 sticky top-[160px] z-10 bg-[#F3F4F6] py-2" id="shop-cat-chips">
+                <!-- JS Generated -->
+            </div>
+
+            <!-- Product List -->
             <div id="shop-product-list" class="grid grid-cols-1 gap-3 mb-6">
                 <!-- JS Generated Products with +/- -->
             </div>
 
             <!-- Cart Summary & Checkout -->
-            <div class="bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] fixed bottom-0 left-0 right-0 p-5 z-40 max-w-md mx-auto">
+            <div class="bg-white rounded-t-3xl shadow-[0_-4px_30px_rgba(0,0,0,0.1)] fixed bottom-0 left-0 right-0 px-5 pt-5 pb-6 z-40 max-w-md mx-auto">
+                
+                <!-- Discount Section -->
+                <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs text-gray-500 font-bold">整單折扣 (%)</label>
+                        <div class="flex gap-1 text-[10px] bg-white p-1 rounded-lg border border-gray-200">
+                            <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="round" checked onclick="calculateTotal()">四捨五入</label>
+                            <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="floor" onclick="calculateTotal()">去小數</label>
+                            <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="ceil" onclick="calculateTotal()">進位</label>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="discount-rate" value="100" oninput="calculateTotal()" class="w-20 bg-white border border-gray-200 rounded-lg p-1 text-center font-bold text-orange-600" placeholder="100">
+                        <span class="text-xs text-gray-400">% (例:9折輸90)</span>
+                        <div class="flex-1 text-right text-xs text-red-400 font-bold" id="discount-display"></div>
+                    </div>
+                </div>
+
                 <div class="flex justify-between items-end mb-4 border-b border-gray-100 pb-4">
                     <div>
-                        <div class="text-xs text-gray-400">總金額</div>
+                        <div class="text-xs text-gray-400">折後總金額</div>
                         <div class="text-3xl font-bold text-gray-800">$<span id="cart-total">0</span></div>
+                        <div class="text-[10px] text-gray-400 line-through hidden" id="cart-original-total-wrap">原價 $<span id="cart-original-total">0</span></div>
                     </div>
                     <div class="text-right">
                         <label class="text-xs text-gray-400 block mb-1">付款方式</label>
-                        <select id="payment-method" class="bg-gray-100 border-none rounded-lg text-sm p-1 font-bold text-gray-700">
+                        <select id="payment-method" class="bg-gray-100 border-none rounded-lg text-sm p-1 font-bold text-gray-700 w-32">
                             <option value="cash">💵 現金</option>
                             <option value="linepay">📱 LINE PAY</option>
                             <option value="other">💳 第三方支付</option>
@@ -224,12 +283,13 @@
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
-            <!-- Spacer for fixed bottom cart -->
-            <div class="h-40"></div>
+            
+            <!-- Spacer to ensure bottom content isn't hidden -->
+            <div style="height: 300px;"></div>
         </div>
 
         <!-- 6. HISTORY PAGE -->
-        <div id="page-history" class="page-section">
+        <div id="page-history" class="page-section" style="padding-bottom: 80px;">
             <h3 class="font-bold text-gray-600 mb-2 pl-1">最近交易紀錄</h3>
             <div id="history-list" class="space-y-3">
                 <!-- JS Generated -->
@@ -274,12 +334,15 @@
     <script>
         // --- DATA STORE ---
         let customers = JSON.parse(localStorage.getItem('sm_customers')) || [];
+        // Product structure update: { ..., category: 'String', hidden: Boolean }
         let products = JSON.parse(localStorage.getItem('sm_products')) || [];
         let transactions = JSON.parse(localStorage.getItem('sm_transactions')) || [];
+        let categories = JSON.parse(localStorage.getItem('sm_categories')) || ['未分類', '洗髮類', '護髮類', '服務'];
         let appSettings = JSON.parse(localStorage.getItem('sm_settings')) || { sheetUrl: '' };
 
         // Cart State
         let cart = {}; // { productId: qty }
+        let currentShopCategory = 'All';
 
         // --- NAVIGATION ---
         function navTo(pageId) {
@@ -306,7 +369,7 @@
                 homeBtn.classList.remove('hidden');
                 // Page specific init
                 if(pageId === 'page-customers') renderCustomerList();
-                if(pageId === 'page-products') renderProductList();
+                if(pageId === 'page-products') { renderProductList(); renderCategoryManager(); }
                 if(pageId === 'page-shop') initShop();
                 if(pageId === 'page-deposit') initDeposit();
                 if(pageId === 'page-history') renderHistory();
@@ -414,20 +477,80 @@
             });
         }
 
+        // --- CATEGORY LOGIC ---
+        function toggleCategoryManager() {
+            const el = document.getElementById('category-manager');
+            el.classList.toggle('hidden');
+            renderCategoryManager();
+        }
+
+        function addCategory() {
+            const name = document.getElementById('new-cat-name').value.trim();
+            if(!name) return;
+            if(!categories.includes(name)) {
+                categories.push(name);
+                localStorage.setItem('sm_categories', JSON.stringify(categories));
+                document.getElementById('new-cat-name').value = '';
+                renderCategoryManager();
+                renderProductList(); // Update select dropdowns
+            }
+        }
+
+        function deleteCategory(name) {
+            if(name === '未分類') return alert('無法刪除預設分類');
+            if(confirm(`刪除分類「${name}」？屬於此分類的商品將變更為「未分類」。`)) {
+                categories = categories.filter(c => c !== name);
+                products.forEach(p => {
+                    if(p.category === name) p.category = '未分類';
+                });
+                localStorage.setItem('sm_categories', JSON.stringify(categories));
+                localStorage.setItem('sm_products', JSON.stringify(products));
+                renderCategoryManager();
+                renderProductList();
+            }
+        }
+
+        function renderCategoryManager() {
+            const listEl = document.getElementById('category-list-edit');
+            listEl.innerHTML = '';
+            categories.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2';
+                el.innerHTML = `
+                    ${c}
+                    ${c !== '未分類' ? `<button onclick="deleteCategory('${c}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-times"></i></button>` : ''}
+                `;
+                listEl.appendChild(el);
+            });
+
+            // Update Product Select options
+            const select = document.getElementById('prod-category');
+            const currentVal = select.value;
+            select.innerHTML = '';
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                select.appendChild(opt);
+            });
+            if(categories.includes(currentVal)) select.value = currentVal;
+        }
+
+
         // --- PRODUCT LOGIC ---
         function saveProduct() {
             const id = document.getElementById('prod-id').value;
             const name = document.getElementById('prod-name').value.trim();
             const price = parseInt(document.getElementById('prod-price').value) || 0;
-            const hidden = document.getElementById('prod-hidden').checked;
+            const category = document.getElementById('prod-category').value;
 
             if (!name) return alert('請輸入商品名稱');
 
             if (id) {
                 const idx = products.findIndex(p => p.id == id);
-                if (idx > -1) products[idx] = { ...products[idx], name, price, hidden };
+                if (idx > -1) products[idx] = { ...products[idx], name, price, category };
             } else {
-                products.push({ id: Date.now().toString(), name, price, hidden });
+                products.push({ id: Date.now().toString(), name, price, category, hidden: false });
             }
 
             localStorage.setItem('sm_products', JSON.stringify(products));
@@ -439,12 +562,21 @@
             document.getElementById('prod-id').value = '';
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-price').value = '';
-            document.getElementById('prod-hidden').checked = false;
+            document.getElementById('prod-category').value = categories[0];
         }
 
         function deleteProduct(id) {
             if(confirm('刪除商品？')) {
                 products = products.filter(p => p.id != id);
+                localStorage.setItem('sm_products', JSON.stringify(products));
+                renderProductList();
+            }
+        }
+
+        function toggleProductVisibility(id) {
+            const idx = products.findIndex(p => p.id == id);
+            if(idx > -1) {
+                products[idx].hidden = !products[idx].hidden;
                 localStorage.setItem('sm_products', JSON.stringify(products));
                 renderProductList();
             }
@@ -456,29 +588,45 @@
                 document.getElementById('prod-id').value = p.id;
                 document.getElementById('prod-name').value = p.name;
                 document.getElementById('prod-price').value = p.price;
-                document.getElementById('prod-hidden').checked = p.hidden;
-                window.scrollTo(0,0);
+                document.getElementById('prod-category').value = p.category || '未分類';
+                // Scroll to top
+                document.querySelector('.page-section.active').scrollIntoView({ behavior: 'smooth' });
             }
         }
 
         function renderProductList() {
             const listEl = document.getElementById('product-list');
             listEl.innerHTML = '';
+            
+            // Render with categories grouping or just list with badges?
+            // Simple list with badges is better for management
             products.forEach(p => {
                 const el = document.createElement('div');
-                el.className = `bg-white p-4 rounded-2xl card-shadow flex justify-between items-center ${p.hidden ? 'opacity-50 grayscale' : ''}`;
+                el.className = `bg-white p-4 rounded-2xl card-shadow flex justify-between items-center ${p.hidden ? 'opacity-60 bg-gray-50' : ''}`;
+                
+                const eyeIcon = p.hidden ? 'fa-eye-slash text-gray-400' : 'fa-eye text-green-500';
+                
                 el.innerHTML = `
-                    <div>
-                        <div class="font-bold text-gray-800">${p.name} ${p.hidden ? '(已隱藏)' : ''}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${p.category || '未分類'}</span>
+                            ${p.hidden ? '<span class="text-xs text-red-400 font-bold">(隱藏)</span>' : ''}
+                        </div>
+                        <div class="font-bold text-gray-800">${p.name}</div>
                         <div class="text-orange-500 font-bold">$${p.price}</div>
                     </div>
                     <div class="flex gap-2">
+                         <button onclick="toggleProductVisibility('${p.id}')" class="w-8 h-8 rounded-full bg-white border border-gray-100 shadow flex items-center justify-center">
+                            <i class="fa-solid ${eyeIcon}"></i>
+                         </button>
                          <button onclick="editProduct('${p.id}')" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm">修改</button>
-                         <button onclick="deleteProduct('${p.id}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-sm">刪除</button>
+                         <button onclick="deleteProduct('${p.id}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-sm"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
                 listEl.appendChild(el);
             });
+            // Ensure dropdown is populated in case of fresh load
+            renderCategoryManager();
         }
 
         // --- DEPOSIT LOGIC ---
@@ -514,7 +662,8 @@
                 custName: customers[custIdx].name,
                 details: `儲值: ${amount}, 贈送: ${bonus}`,
                 amount: totalAdd,
-                paymentMethod: 'cash' // Deposit usually cash
+                paymentMethod: 'cash',
+                note: ''
             };
             transactions.unshift(record);
             
@@ -537,26 +686,56 @@
             });
             updateShopBalance();
 
+            // Render Category Chips
+            const chipContainer = document.getElementById('shop-cat-chips');
+            chipContainer.innerHTML = `<button onclick="setShopCategory('All')" class="whitespace-nowrap px-4 py-1 rounded-full text-sm font-bold transition-colors ${currentShopCategory === 'All' ? 'chip-active' : 'chip-inactive'}">全部</button>`;
+            categories.forEach(c => {
+                chipContainer.innerHTML += `<button onclick="setShopCategory('${c}')" class="whitespace-nowrap px-4 py-1 rounded-full text-sm font-bold transition-colors ${currentShopCategory === c ? 'chip-active' : 'chip-inactive'}">${c}</button>`;
+            });
+
+            renderShopProducts();
+            calculateTotal();
+        }
+
+        function setShopCategory(cat) {
+            currentShopCategory = cat;
+            initShop(); // Re-render chips and products
+        }
+
+        function renderShopProducts() {
             const listEl = document.getElementById('shop-product-list');
             listEl.innerHTML = '';
-            products.filter(p => !p.hidden).forEach(p => {
-                cart[p.id] = 0; // Reset cart for this view
+            
+            let filteredProducts = products.filter(p => !p.hidden);
+            if(currentShopCategory !== 'All') {
+                filteredProducts = filteredProducts.filter(p => (p.category || '未分類') === currentShopCategory);
+            }
+
+            if(filteredProducts.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-gray-400 py-10">此分類無商品</div>`;
+                return;
+            }
+
+            filteredProducts.forEach(p => {
+                // Initialize cart for product if not exists (preserves count across tabs)
+                if(cart[p.id] === undefined) cart[p.id] = 0;
+                
                 const el = document.createElement('div');
                 el.className = 'bg-white p-4 rounded-2xl card-shadow flex justify-between items-center';
                 el.innerHTML = `
                     <div>
+                        <div class="text-xs text-gray-400 mb-0.5">${p.category || '未分類'}</div>
                         <div class="font-bold text-gray-800">${p.name}</div>
                         <div class="text-orange-500 font-bold">$${p.price}</div>
                     </div>
                     <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
                         <button onclick="updateCart('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-600 font-bold hover:bg-red-50 hover:text-red-500 transition-colors">-</button>
-                        <span id="qty-${p.id}" class="w-6 text-center font-bold text-gray-700">0</span>
+                        <span id="qty-${p.id}" class="w-6 text-center font-bold text-gray-700">${cart[p.id]}</span>
                         <button onclick="updateCart('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-orange-500 font-bold hover:bg-orange-50 transition-colors">+</button>
                     </div>
                 `;
                 listEl.appendChild(el);
             });
-            calculateTotal();
         }
 
         function updateShopBalance() {
@@ -566,7 +745,6 @@
                 const c = customers.find(x => x.id == custId);
                 display.textContent = `餘額: $${c.balance}`;
                 display.classList.remove('hidden');
-                // Auto select stored value if customer selected
                 document.getElementById('payment-method').value = 'stored';
             } else {
                 display.textContent = '';
@@ -579,25 +757,62 @@
             if(!cart[pid]) cart[pid] = 0;
             cart[pid] += delta;
             if(cart[pid] < 0) cart[pid] = 0;
-            document.getElementById(`qty-${pid}`).textContent = cart[pid];
+            
+            // Update display if visible
+            const qtyEl = document.getElementById(`qty-${pid}`);
+            if(qtyEl) qtyEl.textContent = cart[pid];
+            
             calculateTotal();
         }
 
         function calculateTotal() {
-            let total = 0;
+            let subtotal = 0;
             products.forEach(p => {
-                if(cart[p.id]) total += p.price * cart[p.id];
+                if(cart[p.id]) subtotal += p.price * cart[p.id];
             });
-            document.getElementById('cart-total').textContent = total;
-            return total;
+
+            // Discount Logic
+            const discountInput = parseInt(document.getElementById('discount-rate').value) || 100;
+            const roundMethod = document.querySelector('input[name="round"]:checked').value;
+            
+            // Multiplier: 90 => 0.9
+            const multiplier = discountInput / 100;
+            let final = subtotal * multiplier;
+
+            // Rounding
+            if(roundMethod === 'floor') final = Math.floor(final);
+            else if(roundMethod === 'ceil') final = Math.ceil(final);
+            else final = Math.round(final); // 'round'
+
+            document.getElementById('cart-total').textContent = final;
+            
+            // Show original price if discounted
+            const origWrap = document.getElementById('cart-original-total-wrap');
+            const origVal = document.getElementById('cart-original-total');
+            const discountDisplay = document.getElementById('discount-display');
+            
+            if(discountInput !== 100) {
+                origWrap.classList.remove('hidden');
+                origVal.textContent = subtotal;
+                discountDisplay.textContent = `-${subtotal - final}`;
+            } else {
+                origWrap.classList.add('hidden');
+                discountDisplay.textContent = '';
+            }
+
+            return final;
         }
 
         function processCheckout() {
-            const total = calculateTotal();
-            if(total === 0) return alert('購物車是空的');
+            const finalTotal = calculateTotal(); // Recalculate based on current discount settings
+            
+            if(finalTotal === 0 && Object.values(cart).every(q => q === 0)) return alert('購物車是空的');
 
             const custId = document.getElementById('shop-cust-select').value;
             const paymentMethod = document.getElementById('payment-method').value;
+            const discountInput = document.getElementById('discount-rate').value;
+            const roundMethod = document.querySelector('input[name="round"]:checked').value;
+
             let custName = '訪客';
             let custObj = null;
             let custIdx = -1;
@@ -611,19 +826,30 @@
             // Stored Value Check
             if(paymentMethod === 'stored') {
                 if(!custObj) return alert('請選擇客戶以使用儲值金扣款');
-                if(custObj.balance < total) return alert(`餘額不足！目前餘額: ${custObj.balance}, 需要: ${total}`);
+                if(custObj.balance < finalTotal) return alert(`餘額不足！目前餘額: ${custObj.balance}, 需要: ${finalTotal}`);
                 
                 // Deduct
-                customers[custIdx].balance -= total;
+                customers[custIdx].balance -= finalTotal;
                 localStorage.setItem('sm_customers', JSON.stringify(customers));
             }
 
             // Build Details String
             let detailItems = [];
+            let originalSum = 0;
             products.forEach(p => {
-                if(cart[p.id] > 0) detailItems.push(`${p.name} x${cart[p.id]}`);
+                if(cart[p.id] > 0) {
+                    detailItems.push(`${p.name} x${cart[p.id]}`);
+                    originalSum += p.price * cart[p.id];
+                }
             });
-            const detailsStr = detailItems.join(', ');
+            
+            let detailsStr = detailItems.join(', ');
+            
+            // Add discount info to details if applied
+            let discountInfo = '';
+            if(parseInt(discountInput) !== 100) {
+                discountInfo = `\n(原價${originalSum}，折扣${discountInput}%，${{floor:'去小數',ceil:'進位',round:'四捨五入'}[roundMethod]})`;
+            }
 
             // Record
             const record = {
@@ -632,8 +858,8 @@
                 type: 'purchase',
                 custId: custId || 'guest',
                 custName: custName,
-                details: detailsStr,
-                amount: total,
+                details: detailsStr + discountInfo,
+                amount: finalTotal,
                 paymentMethod: paymentMethod
             };
             transactions.unshift(record);
@@ -644,7 +870,7 @@
                 'cash': '現金', 'linepay': 'LINE PAY', 'other': '第三方支付', 'stored': '儲值金扣款'
             }[paymentMethod];
 
-            let copyText = `【購買明細】\n日期：${record.date}\n客戶：${custName}\n品項：\n${detailItems.join('\n')}\n----------------\n總金額：${total}\n付款方式：${paymentText}`;
+            let copyText = `【購買明細】\n日期：${record.date}\n客戶：${custName}\n品項：\n${detailItems.join('\n')}\n----------------\n${discountInfo ? `原價：${originalSum}\n折扣：${discountInput}%\n` : ''}實收金額：${finalTotal}\n付款方式：${paymentText}`;
             if(paymentMethod === 'stored' && custObj) {
                 copyText += `\n目前餘額：${customers[custIdx].balance}`;
             }
@@ -653,6 +879,9 @@
             syncToGoogleSheet('purchase', record);
             
             // Reset
+            cart = {};
+            currentShopCategory = 'All';
+            document.getElementById('discount-rate').value = '100';
             initShop();
         }
 
@@ -664,7 +893,6 @@
                 const isDeposit = t.type === 'deposit';
                 const icon = isDeposit ? 'fa-circle-dollar-to-slot' : 'fa-bag-shopping';
                 const colorClass = isDeposit ? 'text-green-500 bg-green-50' : 'text-orange-500 bg-orange-50';
-                const sign = isDeposit ? '+' : '-'; // Although purchase records positive amount, conceptually it's spend
                 
                 const el = document.createElement('div');
                 el.className = 'bg-white p-4 rounded-2xl card-shadow flex gap-3 items-start';
@@ -678,7 +906,7 @@
                             <span class="font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">$${t.amount}</span>
                         </div>
                         <div class="text-xs text-gray-500 mt-1">${t.date}</div>
-                        <div class="text-sm text-gray-600 mt-1 break-words bg-gray-50 p-2 rounded-lg">${t.details}</div>
+                        <div class="text-sm text-gray-600 mt-1 break-words bg-gray-50 p-2 rounded-lg whitespace-pre-line">${t.details}</div>
                         <div class="text-xs text-gray-400 mt-1 text-right">付款: ${t.paymentMethod}</div>
                     </div>
                 `;
@@ -716,19 +944,13 @@
         function syncToGoogleSheet(action, data) {
             if(!appSettings.sheetUrl) return;
 
-            // This is a "fire and forget" or basic fetch. 
-            // In a real scenario, you need to handle CORS. 
-            // The best way for simple usage is using 'no-cors' mode with Google Script Web App
-            // OR use a hidden iframe/form submission technique.
-            
-            // Building a payload
             const payload = new URLSearchParams();
             payload.append('action', action);
             payload.append('data', JSON.stringify(data));
 
             fetch(appSettings.sheetUrl, {
                 method: 'POST',
-                mode: 'no-cors', // Important for Google Script execution from client side without complex setup
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
@@ -745,9 +967,9 @@
         if(customers.length === 0 && products.length === 0) {
             // Demo Data
             customers.push({id: '1', name: '王小明', phone: '0912345678', address: '台北市信義區', balance: 500, joinedAt: new Date().toISOString()});
-            products.push({id: '1', name: '洗髮精', price: 300, hidden: false});
-            products.push({id: '2', name: '護髮素', price: 450, hidden: false});
-            products.push({id: '3', name: '剪髮服務', price: 500, hidden: false});
+            products.push({id: '1', name: '洗髮精', price: 300, category: '洗髮類', hidden: false});
+            products.push({id: '2', name: '護髮素', price: 450, category: '護髮類', hidden: false});
+            products.push({id: '3', name: '剪髮服務', price: 500, category: '服務', hidden: false});
             localStorage.setItem('sm_customers', JSON.stringify(customers));
             localStorage.setItem('sm_products', JSON.stringify(products));
         }
