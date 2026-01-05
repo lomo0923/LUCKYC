@@ -3,65 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>儲值管理系統</title>
-    <!-- Tailwind CSS -->
+    <title>儲值管理系統 (支援雲端同步)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #F3F4F6;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .page-section {
-            display: none;
-            padding-bottom: 220px; /* Increased padding for larger bottom cart */
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        .page-section.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .card-shadow {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-        /* Custom Scrollbar hide */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%);
-        }
-        .glass-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
-        .chip-active {
-            background-color: #FF6B6B;
-            color: white;
-        }
-        .chip-inactive {
-            background-color: #fff;
-            color: #666;
-            border: 1px solid #eee;
-        }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #F3F4F6; -webkit-tap-highlight-color: transparent; }
+        .page-section { display: none; padding-bottom: 220px; animation: fadeIn 0.3s ease-in-out; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .gradient-bg { background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%); }
+        .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .chip-active { background-color: #FF6B6B; color: white; }
+        .chip-inactive { background-color: #fff; color: #666; border: 1px solid #eee; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; color: white; flex-direction: column; }
     </style>
 </head>
 <body class="text-gray-700">
 
+    <!-- Loading UI -->
+    <div id="loading-ui" class="loading-overlay">
+        <i class="fa-solid fa-spinner fa-spin text-4xl mb-2"></i>
+        <span>同步資料中...</span>
+    </div>
+
     <!-- Fixed Header -->
-    <header class="fixed top-0 left-0 right-0 z-50 glass-header shadow-sm border-b border-gray-100 h-16 flex items-center justify-between px-4 transition-all duration-300">
+    <header class="fixed top-0 left-0 right-0 z-50 glass-header shadow-sm border-b border-gray-100 h-16 flex items-center justify-between px-4">
         <div class="flex items-center">
             <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center text-white font-bold mr-3 shadow-md">
                 <i class="fa-solid fa-store"></i>
@@ -73,20 +44,17 @@
         </button>
     </header>
 
-    <!-- Main Content Container -->
     <main class="pt-20 px-4 max-w-md mx-auto min-h-screen relative">
         
-        <!-- HOME PAGE (Dashboard) -->
+        <!-- HOME PAGE -->
         <div id="page-home" class="page-section active" style="padding-bottom: 80px;">
             <div class="grid grid-cols-2 gap-4">
-                <!-- 購買 (Primary Action) -->
                 <button onclick="navTo('page-shop')" class="col-span-2 gradient-bg text-white p-6 rounded-3xl shadow-lg transform active:scale-95 transition-transform flex flex-col items-center justify-center gap-2">
                     <i class="fa-solid fa-cart-shopping text-3xl"></i>
                     <span class="text-xl font-bold">商品購買</span>
                     <span class="text-xs opacity-90">結帳、扣款、紀錄</span>
                 </button>
 
-                <!-- Menu Items -->
                 <button onclick="navTo('page-customers')" class="bg-white p-5 rounded-2xl card-shadow flex flex-col items-center gap-2 active:bg-gray-50">
                     <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><i class="fa-solid fa-user-plus"></i></div>
                     <span class="font-bold text-sm">客戶管理</span>
@@ -108,871 +76,442 @@
                 </button>
             </div>
 
-            <!-- Settings / Google Sheet -->
-            <div class="mt-6">
+            <!-- Cloud Sync & Settings -->
+            <div class="mt-6 space-y-4">
+                <div class="bg-white rounded-2xl p-4 card-shadow border-2 border-orange-100">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-down text-blue-500"></i> 雲端備份同步
+                    </h3>
+                    <div class="text-[10px] text-gray-400 mb-3">清除瀏覽器紀錄前，請先按同步以免資料遺失。</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="pullFromCloud()" class="bg-blue-500 text-white text-xs py-2.5 rounded-lg font-bold">
+                            <i class="fa-solid fa-download mr-1"></i> 下載雲端資料
+                        </button>
+                        <button onclick="pushToCloud()" class="bg-gray-800 text-white text-xs py-2.5 rounded-lg font-bold">
+                            <i class="fa-solid fa-upload mr-1"></i> 上傳全量備份
+                        </button>
+                    </div>
+                    <div id="sync-status" class="mt-2 text-[10px] text-center text-gray-400">尚未同步</div>
+                </div>
+
                 <div class="bg-white rounded-2xl p-4 card-shadow">
                     <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <i class="fa-brands fa-google text-green-600"></i> 設定與串接
+                        <i class="fa-brands fa-google text-green-600"></i> Google Sheet URL
                     </h3>
-                    <div class="text-xs text-gray-500 mb-3">若需串接 Google Sheet，請貼上 Web App URL。</div>
-                    <input type="text" id="gsheet-url" placeholder="Google Script URL..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400 transition-colors">
-                    <button onclick="saveSettings()" class="mt-2 w-full bg-gray-800 text-white text-sm py-2 rounded-lg">儲存設定</button>
+                    <input type="text" id="gsheet-url" placeholder="貼上 Web App URL..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400">
+                    <button onclick="saveSettings()" class="mt-2 w-full bg-gray-200 text-gray-700 text-xs py-2 rounded-lg font-bold">儲存設定</button>
                 </div>
             </div>
         </div>
 
         <!-- 1. CUSTOMER PAGE -->
-        <div id="page-customers" class="page-section" style="padding-bottom: 80px;">
+        <div id="page-customers" class="page-section">
             <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
                 <h3 class="font-bold text-lg mb-4 text-orange-500">新增/修改客戶</h3>
                 <input type="hidden" id="cust-id">
                 <div class="space-y-3">
-                    <input type="text" id="cust-name" placeholder="姓名" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
-                    <input type="tel" id="cust-phone" placeholder="電話" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
-                    <input type="text" id="cust-address" placeholder="地址" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-orange-200">
+                    <input type="text" id="cust-name" placeholder="姓名" class="w-full bg-gray-50 p-3 rounded-xl border-none">
+                    <input type="tel" id="cust-phone" placeholder="電話" class="w-full bg-gray-50 p-3 rounded-xl border-none">
+                    <input type="text" id="cust-address" placeholder="地址" class="w-full bg-gray-50 p-3 rounded-xl border-none">
                     <div class="flex gap-2">
-                        <button onclick="saveCustomer()" class="flex-1 bg-orange-500 text-white py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">儲存客戶</button>
+                        <button onclick="saveCustomer()" class="flex-1 bg-orange-500 text-white py-3 rounded-xl font-bold">儲存客戶</button>
                         <button onclick="clearCustomerForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button>
                     </div>
                 </div>
             </div>
-
-            <h3 class="font-bold text-gray-600 mb-2 pl-1">客戶列表 (餘額查詢)</h3>
-            <div class="relative">
-                <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400"></i>
-                <input type="text" id="cust-search" oninput="renderCustomerList()" placeholder="搜尋姓名或電話..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border-none shadow-sm mb-4">
-            </div>
-            <div id="customer-list" class="space-y-3">
-                <!-- JS Generated -->
-            </div>
+            <h3 class="font-bold text-gray-600 mb-2 pl-1">客戶列表</h3>
+            <div class="relative"><i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400"></i><input type="text" id="cust-search" oninput="renderCustomerList()" placeholder="搜尋姓名或電話..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border-none shadow-sm mb-4"></div>
+            <div id="customer-list" class="space-y-3"></div>
         </div>
 
         <!-- 2. DEPOSIT PAGE -->
-        <div id="page-deposit" class="page-section" style="padding-bottom: 80px;">
+        <div id="page-deposit" class="page-section">
             <div class="bg-white rounded-2xl p-5 card-shadow mb-4">
                 <label class="block text-sm font-bold text-gray-500 mb-1">選擇客戶</label>
-                <select id="deposit-cust-select" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 font-bold text-gray-700">
-                    <option value="">請選擇...</option>
-                    <!-- JS Generated -->
-                </select>
-
+                <select id="deposit-cust-select" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 font-bold text-gray-700"><option value="">請選擇...</option></select>
                 <label class="block text-sm font-bold text-gray-500 mb-1">儲值金額</label>
-                <input type="number" id="deposit-amount" placeholder="例如: 1000" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 text-xl font-bold text-orange-600">
-
-                <label class="block text-sm font-bold text-gray-500 mb-1">贈送金額 (手動)</label>
-                <input type="number" id="deposit-bonus" placeholder="例如: 100" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-6">
-
-                <button onclick="processDeposit()" class="w-full gradient-bg text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform">
-                    確認儲值
-                </button>
+                <input type="number" id="deposit-amount" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-4 text-xl font-bold text-orange-600">
+                <label class="block text-sm font-bold text-gray-500 mb-1">贈送金額</label>
+                <input type="number" id="deposit-bonus" class="w-full bg-gray-50 p-3 rounded-xl border-none mb-6">
+                <button onclick="processDeposit()" class="w-full gradient-bg text-white py-4 rounded-xl font-bold text-lg shadow-lg">確認儲值</button>
             </div>
         </div>
 
         <!-- 4. PRODUCT PAGE -->
-        <div id="page-products" class="page-section" style="padding-bottom: 80px;">
-            
-            <!-- Category Management Toggle -->
-            <div class="flex justify-end mb-2">
-                <button onclick="toggleCategoryManager()" class="text-sm text-purple-600 font-bold bg-purple-50 px-3 py-1 rounded-lg">
-                    <i class="fa-solid fa-list-ul"></i> 管理分類
-                </button>
-            </div>
-
-            <!-- Category Manager (Hidden by default) -->
+        <div id="page-products" class="page-section">
+            <div class="flex justify-end mb-2"><button onclick="toggleCategoryManager()" class="text-sm text-purple-600 font-bold bg-purple-50 px-3 py-1 rounded-lg"><i class="fa-solid fa-list-ul"></i> 管理分類</button></div>
             <div id="category-manager" class="hidden bg-white rounded-2xl p-4 card-shadow mb-4 border border-purple-100">
-                <h4 class="font-bold text-gray-700 mb-2">新增/刪除分類</h4>
-                <div class="flex gap-2 mb-3">
-                    <input type="text" id="new-cat-name" placeholder="新分類名稱" class="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-sm">
-                    <button onclick="addCategory()" class="bg-purple-500 text-white px-4 rounded-lg text-sm font-bold">新增</button>
-                </div>
-                <div id="category-list-edit" class="flex flex-wrap gap-2">
-                    <!-- JS Generated Chips with Delete -->
-                </div>
+                <h4 class="font-bold text-gray-700 mb-2">分類管理</h4>
+                <div class="flex gap-2 mb-3"><input type="text" id="new-cat-name" placeholder="新分類" class="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-sm"><button onclick="addCategory()" class="bg-purple-500 text-white px-4 rounded-lg text-sm">新增</button></div>
+                <div id="category-list-edit" class="flex flex-wrap gap-2"></div>
             </div>
-
-            <!-- Product Form -->
             <div class="bg-white rounded-2xl p-4 card-shadow mb-4">
-                <h3 class="font-bold text-lg mb-4 text-purple-600">商品管理</h3>
+                <h3 class="font-bold text-lg mb-4 text-purple-600">商品設定</h3>
                 <input type="hidden" id="prod-id">
-                
-                <div class="mb-3">
-                    <label class="block text-xs text-gray-400 mb-1">商品分類</label>
-                    <select id="prod-category" class="w-full bg-gray-50 p-3 rounded-xl border-none text-gray-700 font-bold">
-                        <!-- JS Generated -->
-                    </select>
-                </div>
-
+                <div class="mb-3"><label class="block text-xs text-gray-400 mb-1">分類</label><select id="prod-category" class="w-full bg-gray-50 p-3 rounded-xl border-none"></select></div>
                 <div class="grid grid-cols-3 gap-3 mb-3">
-                    <input type="text" id="prod-name" placeholder="商品名稱" class="col-span-2 bg-gray-50 p-3 rounded-xl border-none">
+                    <input type="text" id="prod-name" placeholder="名稱" class="col-span-2 bg-gray-50 p-3 rounded-xl border-none">
                     <input type="number" id="prod-price" placeholder="價格" class="col-span-1 bg-gray-50 p-3 rounded-xl border-none">
                 </div>
-                
-                <div class="flex gap-2">
-                    <button onclick="saveProduct()" class="flex-1 bg-purple-500 text-white py-3 rounded-xl font-bold shadow-md">儲存商品</button>
-                    <button onclick="clearProductForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button>
-                </div>
+                <div class="flex gap-2"><button onclick="saveProduct()" class="flex-1 bg-purple-500 text-white py-3 rounded-xl font-bold">儲存</button><button onclick="clearProductForm()" class="px-4 bg-gray-200 text-gray-600 rounded-xl font-bold">重置</button></div>
             </div>
-
-            <div id="product-list" class="space-y-3">
-                <!-- JS Generated -->
-            </div>
+            <div id="product-list" class="space-y-3"></div>
         </div>
 
         <!-- 5. SHOP PAGE -->
         <div id="page-shop" class="page-section">
-            <!-- Customer Selector -->
-            <div class="bg-white rounded-2xl p-4 card-shadow mb-4 sticky top-16 z-20 border border-orange-100">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="text-sm font-bold text-gray-500">購買人</label>
-                    <span id="shop-balance-display" class="text-sm font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg">餘額: $0</span>
-                </div>
-                <select id="shop-cust-select" onchange="updateShopBalance()" class="w-full bg-gray-50 p-2 rounded-lg border-none font-bold text-gray-800">
-                    <option value="">-- 訪客 / 選擇會員 --</option>
-                    <!-- JS Generated -->
-                </select>
+            <div class="bg-white rounded-2xl p-4 card-shadow mb-4 sticky top-16 z-20">
+                <div class="flex justify-between items-center mb-2"><label class="text-sm font-bold text-gray-500">購買人</label><span id="shop-balance-display" class="text-sm font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg"></span></div>
+                <select id="shop-cust-select" onchange="updateShopBalance()" class="w-full bg-gray-50 p-2 rounded-lg border-none font-bold text-gray-800"><option value="">-- 訪客 --</option></select>
             </div>
+            <div class="flex overflow-x-auto gap-2 mb-4 no-scrollbar py-2" id="shop-cat-chips"></div>
+            <div id="shop-product-list" class="grid grid-cols-1 gap-3 mb-6"></div>
 
-            <!-- Category Filter Chips -->
-            <div class="flex overflow-x-auto gap-2 mb-4 no-scrollbar pb-1 sticky top-[160px] z-10 bg-[#F3F4F6] py-2" id="shop-cat-chips">
-                <!-- JS Generated -->
-            </div>
-
-            <!-- Product List -->
-            <div id="shop-product-list" class="grid grid-cols-1 gap-3 mb-6">
-                <!-- JS Generated Products with +/- -->
-            </div>
-
-            <!-- Cart Summary & Checkout -->
             <div class="bg-white rounded-t-3xl shadow-[0_-4px_30px_rgba(0,0,0,0.1)] fixed bottom-0 left-0 right-0 px-5 pt-5 pb-6 z-40 max-w-md mx-auto">
-                
-                <!-- Discount Section -->
                 <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs text-gray-500 font-bold">整單折扣 (%)</label>
+                    <div class="flex justify-between items-center mb-2"><label class="text-xs text-gray-500 font-bold">折扣 (%)</label>
                         <div class="flex gap-1 text-[10px] bg-white p-1 rounded-lg border border-gray-200">
-                            <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="round" checked onclick="calculateTotal()">四捨五入</label>
+                            <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="round" checked onclick="calculateTotal()">四捨</label>
                             <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="floor" onclick="calculateTotal()">去小數</label>
                             <label class="flex items-center gap-1 cursor-pointer px-1"><input type="radio" name="round" value="ceil" onclick="calculateTotal()">進位</label>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="number" id="discount-rate" value="100" oninput="calculateTotal()" class="w-20 bg-white border border-gray-200 rounded-lg p-1 text-center font-bold text-orange-600" placeholder="100">
-                        <span class="text-xs text-gray-400">% (例:9折輸90)</span>
+                        <input type="number" id="discount-rate" value="100" oninput="calculateTotal()" class="w-16 bg-white border rounded-lg p-1 text-center font-bold text-orange-600">
+                        <span class="text-xs text-gray-400">%</span>
                         <div class="flex-1 text-right text-xs text-red-400 font-bold" id="discount-display"></div>
                     </div>
                 </div>
-
-                <div class="flex justify-between items-end mb-4 border-b border-gray-100 pb-4">
-                    <div>
-                        <div class="text-xs text-gray-400">折後總金額</div>
-                        <div class="text-3xl font-bold text-gray-800">$<span id="cart-total">0</span></div>
-                        <div class="text-[10px] text-gray-400 line-through hidden" id="cart-original-total-wrap">原價 $<span id="cart-original-total">0</span></div>
-                    </div>
-                    <div class="text-right">
-                        <label class="text-xs text-gray-400 block mb-1">付款方式</label>
-                        <select id="payment-method" class="bg-gray-100 border-none rounded-lg text-sm p-1 font-bold text-gray-700 w-32">
-                            <option value="cash">💵 現金</option>
-                            <option value="linepay">📱 LINE PAY</option>
-                            <option value="other">💳 第三方支付</option>
-                            <option value="stored">💰 儲值金扣款</option>
-                        </select>
-                    </div>
+                <div class="flex justify-between items-end mb-4 border-b pb-4">
+                    <div><div class="text-xs text-gray-400">折後總額</div><div class="text-3xl font-bold text-gray-800">$<span id="cart-total">0</span></div></div>
+                    <select id="payment-method" class="bg-gray-100 rounded-lg text-sm p-1 font-bold w-32"><option value="cash">💵 現金</option><option value="linepay">📱 LINE PAY</option><option value="stored">💰 儲值扣款</option></select>
                 </div>
-                <button onclick="processCheckout()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2">
-                    <span>確認結帳</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
+                <button onclick="processCheckout()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold">確認結帳</button>
             </div>
-            
-            <!-- Spacer to ensure bottom content isn't hidden -->
             <div style="height: 300px;"></div>
         </div>
 
         <!-- 6. HISTORY PAGE -->
-        <div id="page-history" class="page-section" style="padding-bottom: 80px;">
-            <h3 class="font-bold text-gray-600 mb-2 pl-1">最近交易紀錄</h3>
-            <div id="history-list" class="space-y-3">
-                <!-- JS Generated -->
-            </div>
-        </div>
+        <div id="page-history" class="page-section"><div id="history-list" class="space-y-3"></div></div>
 
-        <!-- GLOBAL: Return Home Button (Inside pages) -->
+        <!-- GLOBAL: Return Home -->
         <div id="btn-return-home" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 hidden">
-            <button onclick="goToHome()" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-bold text-sm flex items-center gap-2">
-                <i class="fa-solid fa-house"></i> 返回首頁
-            </button>
+            <button onclick="goToHome()" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl font-bold text-sm"><i class="fa-solid fa-house"></i> 返回首頁</button>
         </div>
 
     </main>
 
-    <!-- MODAL: Result & Copy -->
+    <!-- MODAL -->
     <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transform scale-100 transition-transform">
-            <div class="text-center mb-4">
-                <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800">操作成功</h3>
-            </div>
-            
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 relative group">
-                <textarea id="copy-target" class="w-full bg-transparent border-none text-sm text-gray-600 h-32 resize-none focus:ring-0" readonly></textarea>
-                <div class="absolute top-2 right-2 text-xs text-gray-400">預覽</div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="copyText()" class="bg-gray-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2">
-                    <i class="fa-regular fa-copy"></i> 複製文字
-                </button>
-                <button onclick="closeModal()" class="bg-gray-200 text-gray-700 py-3 rounded-xl font-bold">
-                    關閉
-                </button>
-            </div>
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="text-center mb-4"><div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-xl"><i class="fa-solid fa-check"></i></div><h3 class="text-lg font-bold">成功</h3></div>
+            <textarea id="copy-target" class="w-full bg-gray-50 p-3 rounded-xl text-sm h-32 resize-none mb-4" readonly></textarea>
+            <div class="grid grid-cols-2 gap-3"><button onclick="copyText()" class="bg-gray-800 text-white py-3 rounded-xl font-bold text-sm">複製文字</button><button onclick="closeModal()" class="bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-sm">關閉</button></div>
         </div>
     </div>
 
     <script>
-        // --- DATA STORE ---
+        // --- DATA ---
         let customers = JSON.parse(localStorage.getItem('sm_customers')) || [];
-        // Product structure update: { ..., category: 'String', hidden: Boolean }
         let products = JSON.parse(localStorage.getItem('sm_products')) || [];
         let transactions = JSON.parse(localStorage.getItem('sm_transactions')) || [];
-        let categories = JSON.parse(localStorage.getItem('sm_categories')) || ['未分類', '洗髮類', '護髮類', '服務'];
+        let categories = JSON.parse(localStorage.getItem('sm_categories')) || ['未分類'];
         let appSettings = JSON.parse(localStorage.getItem('sm_settings')) || { sheetUrl: '' };
-
-        // Cart State
-        let cart = {}; // { productId: qty }
+        let cart = {};
         let currentShopCategory = 'All';
+
+        // --- CLOUD SYNC LOGIC ---
+        async function pullFromCloud() {
+            if(!appSettings.sheetUrl) return alert('請先設定 Google Sheet URL');
+            showLoading(true);
+            try {
+                // 假設您的 Script 支援 GET 並回傳全量 JSON
+                const response = await fetch(`${appSettings.sheetUrl}?action=pull`);
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    const d = result.data;
+                    customers = d.customers || [];
+                    products = d.products || [];
+                    transactions = d.transactions || [];
+                    categories = d.categories || ['未分類'];
+                    
+                    saveAllToLocal();
+                    document.getElementById('sync-status').textContent = '最後同步: ' + new Date().toLocaleString();
+                    alert('雲端資料下載成功！');
+                    navTo('page-home');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('下載失敗，請檢查 URL 是否正確或 Script 是否有回傳正確格式。');
+            }
+            showLoading(false);
+        }
+
+        async function pushToCloud() {
+            if(!appSettings.sheetUrl) return alert('請先設定 Google Sheet URL');
+            if(!confirm('這將會用目前手機上的資料覆蓋雲端備份，確定嗎？')) return;
+            
+            showLoading(true);
+            const allData = { customers, products, transactions, categories };
+            try {
+                await syncToGoogleSheet('full_push', allData);
+                document.getElementById('sync-status').textContent = '最後備份: ' + new Date().toLocaleString();
+                alert('全量備份成功！');
+            } catch (e) {
+                alert('上傳失敗');
+            }
+            showLoading(false);
+        }
+
+        function saveAllToLocal() {
+            localStorage.setItem('sm_customers', JSON.stringify(customers));
+            localStorage.setItem('sm_products', JSON.stringify(products));
+            localStorage.setItem('sm_transactions', JSON.stringify(transactions));
+            localStorage.setItem('sm_categories', JSON.stringify(categories));
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading-ui').style.display = show ? 'flex' : 'none';
+        }
 
         // --- NAVIGATION ---
         function navTo(pageId) {
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            
-            // Title Update
-            const titles = {
-                'page-home': '首頁',
-                'page-customers': '客戶管理',
-                'page-deposit': '儲值中心',
-                'page-products': '商品設定',
-                'page-shop': '商品購買',
-                'page-history': '購買紀錄'
-            };
+            const titles = { 'page-home': '首頁', 'page-customers': '客戶管理', 'page-deposit': '儲值中心', 'page-products': '商品設定', 'page-shop': '商品購買', 'page-history': '紀錄' };
             document.getElementById('page-title').textContent = titles[pageId];
-            window.scrollTo(0, 0);
-
-            // Toggle "Return Home" Button
             const homeBtn = document.getElementById('btn-return-home');
-            if(pageId === 'page-home') {
-                homeBtn.classList.add('hidden');
-            } else {
-                homeBtn.classList.remove('hidden');
-                // Page specific init
+            if(pageId === 'page-home') { homeBtn.classList.add('hidden'); } 
+            else { 
+                homeBtn.classList.remove('hidden'); 
                 if(pageId === 'page-customers') renderCustomerList();
                 if(pageId === 'page-products') { renderProductList(); renderCategoryManager(); }
                 if(pageId === 'page-shop') initShop();
                 if(pageId === 'page-deposit') initDeposit();
                 if(pageId === 'page-history') renderHistory();
             }
+            window.scrollTo(0, 0);
         }
 
-        function goToHome() {
-            navTo('page-home');
-        }
+        function goToHome() { navTo('page-home'); }
 
         // --- SETTINGS ---
         function saveSettings() {
-            const url = document.getElementById('gsheet-url').value.trim();
-            appSettings.sheetUrl = url;
+            appSettings.sheetUrl = document.getElementById('gsheet-url').value.trim();
             localStorage.setItem('sm_settings', JSON.stringify(appSettings));
-            alert('設定已儲存！');
+            alert('設定儲存！');
         }
 
-        // --- CUSTOMER LOGIC ---
+        // --- CUSTOMER ---
         function saveCustomer() {
             const id = document.getElementById('cust-id').value;
             const name = document.getElementById('cust-name').value.trim();
             const phone = document.getElementById('cust-phone').value.trim();
             const address = document.getElementById('cust-address').value.trim();
-
-            if (!name) return alert('請輸入姓名');
-
+            if (!name) return;
             if (id) {
-                // Edit
                 const idx = customers.findIndex(c => c.id == id);
-                if (idx > -1) {
-                    customers[idx] = { ...customers[idx], name, phone, address };
-                }
+                if (idx > -1) customers[idx] = { ...customers[idx], name, phone, address };
             } else {
-                // Add
-                const newCust = {
-                    id: Date.now().toString(),
-                    name,
-                    phone,
-                    address,
-                    balance: 0,
-                    joinedAt: new Date().toISOString()
-                };
-                customers.push(newCust);
+                customers.push({ id: Date.now().toString(), name, phone, address, balance: 0, joinedAt: new Date().toISOString() });
             }
-
-            localStorage.setItem('sm_customers', JSON.stringify(customers));
+            saveAllToLocal();
             clearCustomerForm();
             renderCustomerList();
-            showResultModal('客戶資料已更新', `【客戶資料更新】\n姓名：${name}\n電話：${phone}\n地址：${address}`);
             syncToGoogleSheet('customer_update', {name, phone, address});
         }
-
-        function deleteCustomer(id) {
-            if(confirm('確定要刪除此客戶嗎？資料將無法復原。')) {
-                customers = customers.filter(c => c.id != id);
-                localStorage.setItem('sm_customers', JSON.stringify(customers));
-                renderCustomerList();
-            }
-        }
-
-        function editCustomer(id) {
-            const cust = customers.find(c => c.id == id);
-            if(cust) {
-                document.getElementById('cust-id').value = cust.id;
-                document.getElementById('cust-name').value = cust.name;
-                document.getElementById('cust-phone').value = cust.phone;
-                document.getElementById('cust-address').value = cust.address;
-                window.scrollTo(0, 0);
-            }
-        }
-
-        function clearCustomerForm() {
-            document.getElementById('cust-id').value = '';
-            document.getElementById('cust-name').value = '';
-            document.getElementById('cust-phone').value = '';
-            document.getElementById('cust-address').value = '';
-        }
-
         function renderCustomerList() {
             const listEl = document.getElementById('customer-list');
-            const search = document.getElementById('cust-search').value.toLowerCase();
+            const s = document.getElementById('cust-search').value.toLowerCase();
             listEl.innerHTML = '';
-
             customers.forEach(c => {
-                if(c.name.toLowerCase().includes(search) || c.phone.includes(search)) {
+                if(c.name.includes(s) || c.phone.includes(s)) {
                     const el = document.createElement('div');
                     el.className = 'bg-white p-4 rounded-2xl card-shadow flex justify-between items-center';
-                    el.innerHTML = `
-                        <div>
-                            <div class="font-bold text-gray-800 text-lg">${c.name}</div>
-                            <div class="text-sm text-gray-400 mb-1">${c.phone}</div>
-                            <div class="text-xs text-gray-400">${c.address || '無地址'}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-orange-500 text-xl mb-2">$${c.balance}</div>
-                            <div class="flex gap-2">
-                                <button onclick="editCustomer('${c.id}')" class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteCustomer('${c.id}')" class="bg-red-100 text-red-600 w-8 h-8 rounded-full"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                    `;
+                    el.innerHTML = `<div><div class="font-bold">${c.name}</div><div class="text-xs text-gray-400">${c.phone}</div></div><div class="text-right"><div class="font-bold text-orange-500">$${c.balance}</div><button onclick="editCustomer('${c.id}')" class="text-xs text-blue-500">修改</button></div>`;
                     listEl.appendChild(el);
                 }
             });
         }
-
-        // --- CATEGORY LOGIC ---
-        function toggleCategoryManager() {
-            const el = document.getElementById('category-manager');
-            el.classList.toggle('hidden');
-            renderCategoryManager();
+        function editCustomer(id) {
+            const c = customers.find(x => x.id == id);
+            if(c) {
+                document.getElementById('cust-id').value = c.id;
+                document.getElementById('cust-name').value = c.name;
+                document.getElementById('cust-phone').value = c.phone;
+                document.getElementById('cust-address').value = c.address;
+                window.scrollTo(0,0);
+            }
+        }
+        function clearCustomerForm() {
+            ['cust-id','cust-name','cust-phone','cust-address'].forEach(id => document.getElementById(id).value = '');
         }
 
+        // --- DEPOSIT ---
+        function initDeposit() {
+            const sel = document.getElementById('deposit-cust-select');
+            sel.innerHTML = '<option value="">選擇客戶...</option>';
+            customers.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name} (${c.balance})</option>`);
+        }
+        function processDeposit() {
+            const id = document.getElementById('deposit-cust-select').value;
+            const amt = parseInt(document.getElementById('deposit-amount').value) || 0;
+            const bns = parseInt(document.getElementById('deposit-bonus').value) || 0;
+            if(!id || (amt+bns <= 0)) return;
+            const idx = customers.findIndex(c => c.id == id);
+            customers[idx].balance += (amt + bns);
+            const rec = { id: Date.now().toString(), date: new Date().toLocaleString(), type: 'deposit', custName: customers[idx].name, amount: (amt+bns), details: `儲值:${amt} 贈送:${bns}` };
+            transactions.unshift(rec);
+            saveAllToLocal();
+            showResultModal('儲值成功', `姓名：${customers[idx].name}\n儲值後餘額：${customers[idx].balance}`);
+            syncToGoogleSheet('deposit', rec);
+            initDeposit();
+        }
+
+        // --- PRODUCT & CATEGORY ---
+        function toggleCategoryManager() { document.getElementById('category-manager').classList.toggle('hidden'); }
         function addCategory() {
-            const name = document.getElementById('new-cat-name').value.trim();
-            if(!name) return;
-            if(!categories.includes(name)) {
-                categories.push(name);
-                localStorage.setItem('sm_categories', JSON.stringify(categories));
-                document.getElementById('new-cat-name').value = '';
-                renderCategoryManager();
-                renderProductList(); // Update select dropdowns
-            }
+            const n = document.getElementById('new-cat-name').value.trim();
+            if(n && !categories.includes(n)) { categories.push(n); saveAllToLocal(); renderCategoryManager(); }
         }
-
-        function deleteCategory(name) {
-            if(name === '未分類') return alert('無法刪除預設分類');
-            if(confirm(`刪除分類「${name}」？屬於此分類的商品將變更為「未分類」。`)) {
-                categories = categories.filter(c => c !== name);
-                products.forEach(p => {
-                    if(p.category === name) p.category = '未分類';
-                });
-                localStorage.setItem('sm_categories', JSON.stringify(categories));
-                localStorage.setItem('sm_products', JSON.stringify(products));
-                renderCategoryManager();
-                renderProductList();
-            }
-        }
-
         function renderCategoryManager() {
-            const listEl = document.getElementById('category-list-edit');
-            listEl.innerHTML = '';
+            const list = document.getElementById('category-list-edit');
+            list.innerHTML = '';
             categories.forEach(c => {
                 const el = document.createElement('div');
-                el.className = 'bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2';
-                el.innerHTML = `
-                    ${c}
-                    ${c !== '未分類' ? `<button onclick="deleteCategory('${c}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-times"></i></button>` : ''}
-                `;
-                listEl.appendChild(el);
+                el.className = 'bg-gray-100 px-2 py-1 rounded-lg text-xs';
+                el.textContent = c;
+                list.appendChild(el);
             });
-
-            // Update Product Select options
-            const select = document.getElementById('prod-category');
-            const currentVal = select.value;
-            select.innerHTML = '';
-            categories.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.textContent = c;
-                select.appendChild(opt);
-            });
-            if(categories.includes(currentVal)) select.value = currentVal;
+            const sel = document.getElementById('prod-category');
+            sel.innerHTML = '';
+            categories.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
         }
-
-
-        // --- PRODUCT LOGIC ---
         function saveProduct() {
             const id = document.getElementById('prod-id').value;
             const name = document.getElementById('prod-name').value.trim();
             const price = parseInt(document.getElementById('prod-price').value) || 0;
-            const category = document.getElementById('prod-category').value;
-
-            if (!name) return alert('請輸入商品名稱');
-
-            if (id) {
+            const cat = document.getElementById('prod-category').value;
+            if(!name) return;
+            if(id) {
                 const idx = products.findIndex(p => p.id == id);
-                if (idx > -1) products[idx] = { ...products[idx], name, price, category };
+                products[idx] = { ...products[idx], name, price, category: cat };
             } else {
-                products.push({ id: Date.now().toString(), name, price, category, hidden: false });
+                products.push({ id: Date.now().toString(), name, price, category: cat, hidden: false });
             }
-
-            localStorage.setItem('sm_products', JSON.stringify(products));
+            saveAllToLocal();
             clearProductForm();
             renderProductList();
         }
-
-        function clearProductForm() {
-            document.getElementById('prod-id').value = '';
-            document.getElementById('prod-name').value = '';
-            document.getElementById('prod-price').value = '';
-            document.getElementById('prod-category').value = categories[0];
-        }
-
-        function deleteProduct(id) {
-            if(confirm('刪除商品？')) {
-                products = products.filter(p => p.id != id);
-                localStorage.setItem('sm_products', JSON.stringify(products));
-                renderProductList();
-            }
-        }
-
-        function toggleProductVisibility(id) {
-            const idx = products.findIndex(p => p.id == id);
-            if(idx > -1) {
-                products[idx].hidden = !products[idx].hidden;
-                localStorage.setItem('sm_products', JSON.stringify(products));
-                renderProductList();
-            }
-        }
-
-        function editProduct(id) {
-            const p = products.find(x => x.id == id);
-            if(p) {
-                document.getElementById('prod-id').value = p.id;
-                document.getElementById('prod-name').value = p.name;
-                document.getElementById('prod-price').value = p.price;
-                document.getElementById('prod-category').value = p.category || '未分類';
-                // Scroll to top
-                document.querySelector('.page-section.active').scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
         function renderProductList() {
-            const listEl = document.getElementById('product-list');
-            listEl.innerHTML = '';
-            
-            // Render with categories grouping or just list with badges?
-            // Simple list with badges is better for management
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
             products.forEach(p => {
                 const el = document.createElement('div');
-                el.className = `bg-white p-4 rounded-2xl card-shadow flex justify-between items-center ${p.hidden ? 'opacity-60 bg-gray-50' : ''}`;
-                
-                const eyeIcon = p.hidden ? 'fa-eye-slash text-gray-400' : 'fa-eye text-green-500';
-                
-                el.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${p.category || '未分類'}</span>
-                            ${p.hidden ? '<span class="text-xs text-red-400 font-bold">(隱藏)</span>' : ''}
-                        </div>
-                        <div class="font-bold text-gray-800">${p.name}</div>
-                        <div class="text-orange-500 font-bold">$${p.price}</div>
-                    </div>
-                    <div class="flex gap-2">
-                         <button onclick="toggleProductVisibility('${p.id}')" class="w-8 h-8 rounded-full bg-white border border-gray-100 shadow flex items-center justify-center">
-                            <i class="fa-solid ${eyeIcon}"></i>
-                         </button>
-                         <button onclick="editProduct('${p.id}')" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm">修改</button>
-                         <button onclick="deleteProduct('${p.id}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-sm"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-                listEl.appendChild(el);
+                el.className = `bg-white p-3 rounded-xl flex justify-between items-center ${p.hidden ? 'opacity-50' : ''}`;
+                el.innerHTML = `<div><div class="text-[10px] text-gray-400">${p.category}</div><div class="font-bold">${p.name}</div></div><div class="flex gap-2"><button onclick="toggleProd('${p.id}')"><i class="fa-solid ${p.hidden?'fa-eye-slash':'fa-eye'}"></i></button><button onclick="editProd('${p.id}')" class="text-blue-500">改</button></div>`;
+                list.appendChild(el);
             });
-            // Ensure dropdown is populated in case of fresh load
-            renderCategoryManager();
         }
-
-        // --- DEPOSIT LOGIC ---
-        function initDeposit() {
-            const sel = document.getElementById('deposit-cust-select');
-            sel.innerHTML = '<option value="">請選擇客戶...</option>';
-            customers.forEach(c => {
-                sel.innerHTML += `<option value="${c.id}">${c.name} (餘額:${c.balance})</option>`;
-            });
-            document.getElementById('deposit-amount').value = '';
-            document.getElementById('deposit-bonus').value = '';
+        function toggleProd(id) { 
+            const idx = products.findIndex(p => p.id == id); 
+            products[idx].hidden = !products[idx].hidden; 
+            saveAllToLocal(); renderProductList(); 
         }
-
-        function processDeposit() {
-            const custId = document.getElementById('deposit-cust-select').value;
-            const amount = parseInt(document.getElementById('deposit-amount').value) || 0;
-            const bonus = parseInt(document.getElementById('deposit-bonus').value) || 0;
-
-            if(!custId) return alert('請選擇客戶');
-            if(amount <= 0 && bonus <= 0) return alert('請輸入金額');
-
-            const custIdx = customers.findIndex(c => c.id == custId);
-            const oldBalance = customers[custIdx].balance;
-            const totalAdd = amount + bonus;
-            customers[custIdx].balance += totalAdd;
-
-            // Record Transaction
-            const record = {
-                id: Date.now().toString(),
-                date: new Date().toLocaleString(),
-                type: 'deposit',
-                custId: custId,
-                custName: customers[custIdx].name,
-                details: `儲值: ${amount}, 贈送: ${bonus}`,
-                amount: totalAdd,
-                paymentMethod: 'cash',
-                note: ''
-            };
-            transactions.unshift(record);
-            
-            localStorage.setItem('sm_customers', JSON.stringify(customers));
-            localStorage.setItem('sm_transactions', JSON.stringify(transactions));
-
-            const copyText = `【儲值成功通知】\n姓名：${customers[custIdx].name}\n儲值金額：${amount}\n贈送金額：${bonus}\n----------------\n原餘額：${oldBalance}\n目前餘額：${customers[custIdx].balance}\n謝謝您的光臨！`;
-            
-            showResultModal('儲值成功', copyText);
-            syncToGoogleSheet('deposit', record);
-            initDeposit(); // Reset form
+        function editProd(id) {
+            const p = products.find(x => x.id == id);
+            if(p) { document.getElementById('prod-id').value=p.id; document.getElementById('prod-name').value=p.name; document.getElementById('prod-price').value=p.price; document.getElementById('prod-category').value=p.category; }
         }
+        function clearProductForm() { document.getElementById('prod-id').value=''; document.getElementById('prod-name').value=''; document.getElementById('prod-price').value=''; }
 
-        // --- SHOP & CART LOGIC ---
+        // --- SHOP ---
         function initShop() {
             const sel = document.getElementById('shop-cust-select');
-            sel.innerHTML = '<option value="">-- 訪客 / 選擇會員 --</option>';
-            customers.forEach(c => {
-                sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            });
-            updateShopBalance();
-
-            // Render Category Chips
-            const chipContainer = document.getElementById('shop-cat-chips');
-            chipContainer.innerHTML = `<button onclick="setShopCategory('All')" class="whitespace-nowrap px-4 py-1 rounded-full text-sm font-bold transition-colors ${currentShopCategory === 'All' ? 'chip-active' : 'chip-inactive'}">全部</button>`;
-            categories.forEach(c => {
-                chipContainer.innerHTML += `<button onclick="setShopCategory('${c}')" class="whitespace-nowrap px-4 py-1 rounded-full text-sm font-bold transition-colors ${currentShopCategory === c ? 'chip-active' : 'chip-inactive'}">${c}</button>`;
-            });
-
-            renderShopProducts();
+            sel.innerHTML = '<option value="">-- 訪客 --</option>';
+            customers.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            const chips = document.getElementById('shop-cat-chips');
+            chips.innerHTML = `<button onclick="setShopCat('All')" class="px-4 py-1 rounded-full text-xs font-bold ${currentShopCategory==='All'?'chip-active':'chip-inactive'}">全部</button>`;
+            categories.forEach(c => chips.innerHTML += `<button onclick="setShopCat('${c}')" class="px-4 py-1 rounded-full text-xs font-bold ${currentShopCategory===c?'chip-active':'chip-inactive'}">${c}</button>`);
+            renderShopProds();
             calculateTotal();
         }
-
-        function setShopCategory(cat) {
-            currentShopCategory = cat;
-            initShop(); // Re-render chips and products
-        }
-
-        function renderShopProducts() {
-            const listEl = document.getElementById('shop-product-list');
-            listEl.innerHTML = '';
-            
-            let filteredProducts = products.filter(p => !p.hidden);
-            if(currentShopCategory !== 'All') {
-                filteredProducts = filteredProducts.filter(p => (p.category || '未分類') === currentShopCategory);
-            }
-
-            if(filteredProducts.length === 0) {
-                listEl.innerHTML = `<div class="text-center text-gray-400 py-10">此分類無商品</div>`;
-                return;
-            }
-
-            filteredProducts.forEach(p => {
-                // Initialize cart for product if not exists (preserves count across tabs)
-                if(cart[p.id] === undefined) cart[p.id] = 0;
-                
+        function setShopCat(c) { currentShopCategory = c; initShop(); }
+        function renderShopProds() {
+            const list = document.getElementById('shop-product-list');
+            list.innerHTML = '';
+            products.filter(p => !p.hidden && (currentShopCategory==='All' || p.category===currentShopCategory)).forEach(p => {
+                if(!cart[p.id]) cart[p.id] = 0;
                 const el = document.createElement('div');
-                el.className = 'bg-white p-4 rounded-2xl card-shadow flex justify-between items-center';
-                el.innerHTML = `
-                    <div>
-                        <div class="text-xs text-gray-400 mb-0.5">${p.category || '未分類'}</div>
-                        <div class="font-bold text-gray-800">${p.name}</div>
-                        <div class="text-orange-500 font-bold">$${p.price}</div>
-                    </div>
-                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                        <button onclick="updateCart('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-gray-600 font-bold hover:bg-red-50 hover:text-red-500 transition-colors">-</button>
-                        <span id="qty-${p.id}" class="w-6 text-center font-bold text-gray-700">${cart[p.id]}</span>
-                        <button onclick="updateCart('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded shadow text-orange-500 font-bold hover:bg-orange-50 transition-colors">+</button>
-                    </div>
-                `;
-                listEl.appendChild(el);
+                el.className = 'bg-white p-4 rounded-xl flex justify-between items-center';
+                el.innerHTML = `<div><div class="font-bold">${p.name}</div><div class="text-orange-500">$${p.price}</div></div><div class="flex items-center gap-3"><button onclick="updCart('${p.id}',-1)">-</button><span id="q-${p.id}">${cart[p.id]}</span><button onclick="updCart('${p.id}',1)">+</button></div>`;
+                list.appendChild(el);
             });
         }
-
-        function updateShopBalance() {
-            const custId = document.getElementById('shop-cust-select').value;
-            const display = document.getElementById('shop-balance-display');
-            if(custId) {
-                const c = customers.find(x => x.id == custId);
-                display.textContent = `餘額: $${c.balance}`;
-                display.classList.remove('hidden');
-                document.getElementById('payment-method').value = 'stored';
-            } else {
-                display.textContent = '';
-                display.classList.add('hidden');
-                document.getElementById('payment-method').value = 'cash';
-            }
-        }
-
-        function updateCart(pid, delta) {
-            if(!cart[pid]) cart[pid] = 0;
-            cart[pid] += delta;
-            if(cart[pid] < 0) cart[pid] = 0;
-            
-            // Update display if visible
-            const qtyEl = document.getElementById(`qty-${pid}`);
-            if(qtyEl) qtyEl.textContent = cart[pid];
-            
-            calculateTotal();
-        }
-
+        function updCart(id, d) { cart[id] = Math.max(0, (cart[id]||0) + d); document.getElementById(`q-${id}`).textContent = cart[id]; calculateTotal(); }
         function calculateTotal() {
-            let subtotal = 0;
-            products.forEach(p => {
-                if(cart[p.id]) subtotal += p.price * cart[p.id];
-            });
-
-            // Discount Logic
-            const discountInput = parseInt(document.getElementById('discount-rate').value) || 100;
-            const roundMethod = document.querySelector('input[name="round"]:checked').value;
-            
-            // Multiplier: 90 => 0.9
-            const multiplier = discountInput / 100;
-            let final = subtotal * multiplier;
-
-            // Rounding
-            if(roundMethod === 'floor') final = Math.floor(final);
-            else if(roundMethod === 'ceil') final = Math.ceil(final);
-            else final = Math.round(final); // 'round'
-
+            let sub = 0; products.forEach(p => sub += (cart[p.id]||0) * p.price);
+            const rate = parseInt(document.getElementById('discount-rate').value) || 100;
+            const method = document.querySelector('input[name="round"]:checked').value;
+            let final = sub * (rate / 100);
+            if(method==='floor') final = Math.floor(final); else if(method==='ceil') final = Math.ceil(final); else final = Math.round(final);
             document.getElementById('cart-total').textContent = final;
-            
-            // Show original price if discounted
-            const origWrap = document.getElementById('cart-original-total-wrap');
-            const origVal = document.getElementById('cart-original-total');
-            const discountDisplay = document.getElementById('discount-display');
-            
-            if(discountInput !== 100) {
-                origWrap.classList.remove('hidden');
-                origVal.textContent = subtotal;
-                discountDisplay.textContent = `-${subtotal - final}`;
-            } else {
-                origWrap.classList.add('hidden');
-                discountDisplay.textContent = '';
-            }
-
             return final;
         }
-
+        function updateShopBalance() {
+            const id = document.getElementById('shop-cust-select').value;
+            const b = document.getElementById('shop-balance-display');
+            if(id) { const c = customers.find(x => x.id==id); b.textContent = `餘額: $${c.balance}`; } else b.textContent = '';
+        }
         function processCheckout() {
-            const finalTotal = calculateTotal(); // Recalculate based on current discount settings
-            
-            if(finalTotal === 0 && Object.values(cart).every(q => q === 0)) return alert('購物車是空的');
-
+            const total = calculateTotal(); if(total <= 0) return;
             const custId = document.getElementById('shop-cust-select').value;
-            const paymentMethod = document.getElementById('payment-method').value;
-            const discountInput = document.getElementById('discount-rate').value;
-            const roundMethod = document.querySelector('input[name="round"]:checked').value;
-
-            let custName = '訪客';
-            let custObj = null;
-            let custIdx = -1;
-
-            if(custId) {
-                custIdx = customers.findIndex(c => c.id == custId);
-                custObj = customers[custIdx];
-                custName = custObj.name;
+            const pay = document.getElementById('payment-method').value;
+            let cName = '訪客';
+            if(pay==='stored') {
+                if(!custId) return alert('請選會員');
+                const idx = customers.findIndex(c => c.id == custId);
+                if(customers[idx].balance < total) return alert('餘額不足');
+                customers[idx].balance -= total;
+                cName = customers[idx].name;
             }
-
-            // Stored Value Check
-            if(paymentMethod === 'stored') {
-                if(!custObj) return alert('請選擇客戶以使用儲值金扣款');
-                if(custObj.balance < finalTotal) return alert(`餘額不足！目前餘額: ${custObj.balance}, 需要: ${finalTotal}`);
-                
-                // Deduct
-                customers[custIdx].balance -= finalTotal;
-                localStorage.setItem('sm_customers', JSON.stringify(customers));
-            }
-
-            // Build Details String
-            let detailItems = [];
-            let originalSum = 0;
-            products.forEach(p => {
-                if(cart[p.id] > 0) {
-                    detailItems.push(`${p.name} x${cart[p.id]}`);
-                    originalSum += p.price * cart[p.id];
-                }
-            });
-            
-            let detailsStr = detailItems.join(', ');
-            
-            // Add discount info to details if applied
-            let discountInfo = '';
-            if(parseInt(discountInput) !== 100) {
-                discountInfo = `\n(原價${originalSum}，折扣${discountInput}%，${{floor:'去小數',ceil:'進位',round:'四捨五入'}[roundMethod]})`;
-            }
-
-            // Record
-            const record = {
-                id: Date.now().toString(),
-                date: new Date().toLocaleString(),
-                type: 'purchase',
-                custId: custId || 'guest',
-                custName: custName,
-                details: detailsStr + discountInfo,
-                amount: finalTotal,
-                paymentMethod: paymentMethod
-            };
-            transactions.unshift(record);
-            localStorage.setItem('sm_transactions', JSON.stringify(transactions));
-
-            // Generate Copy Text
-            let paymentText = {
-                'cash': '現金', 'linepay': 'LINE PAY', 'other': '第三方支付', 'stored': '儲值金扣款'
-            }[paymentMethod];
-
-            let copyText = `【購買明細】\n日期：${record.date}\n客戶：${custName}\n品項：\n${detailItems.join('\n')}\n----------------\n${discountInfo ? `原價：${originalSum}\n折扣：${discountInput}%\n` : ''}實收金額：${finalTotal}\n付款方式：${paymentText}`;
-            if(paymentMethod === 'stored' && custObj) {
-                copyText += `\n目前餘額：${customers[custIdx].balance}`;
-            }
-
-            showResultModal('結帳成功', copyText);
-            syncToGoogleSheet('purchase', record);
-            
-            // Reset
-            cart = {};
-            currentShopCategory = 'All';
-            document.getElementById('discount-rate').value = '100';
-            initShop();
+            const rec = { id: Date.now().toString(), date: new Date().toLocaleString(), type: 'purchase', custName: cName, amount: total, details: '購買商品', paymentMethod: pay };
+            transactions.unshift(rec);
+            saveAllToLocal();
+            showResultModal('結帳成功', `金額：${total}\n付款：${pay}`);
+            syncToGoogleSheet('purchase', rec);
+            cart = {}; initShop();
         }
 
-        // --- HISTORY LOGIC ---
+        // --- HISTORY ---
         function renderHistory() {
-            const listEl = document.getElementById('history-list');
-            listEl.innerHTML = '';
-            transactions.slice(0, 50).forEach(t => { // Show last 50
-                const isDeposit = t.type === 'deposit';
-                const icon = isDeposit ? 'fa-circle-dollar-to-slot' : 'fa-bag-shopping';
-                const colorClass = isDeposit ? 'text-green-500 bg-green-50' : 'text-orange-500 bg-orange-50';
-                
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            transactions.slice(0, 20).forEach(t => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-4 rounded-2xl card-shadow flex gap-3 items-start';
-                el.innerHTML = `
-                    <div class="w-10 h-10 rounded-full ${colorClass} flex items-center justify-center shrink-0">
-                        <i class="fa-solid ${icon}"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start">
-                            <span class="font-bold text-gray-800">${t.custName}</span>
-                            <span class="font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">$${t.amount}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 mt-1">${t.date}</div>
-                        <div class="text-sm text-gray-600 mt-1 break-words bg-gray-50 p-2 rounded-lg whitespace-pre-line">${t.details}</div>
-                        <div class="text-xs text-gray-400 mt-1 text-right">付款: ${t.paymentMethod}</div>
-                    </div>
-                `;
-                listEl.appendChild(el);
+                el.className = 'bg-white p-3 rounded-xl text-xs';
+                el.innerHTML = `<div class="flex justify-between font-bold"><span>${t.custName}</span><span>$${t.amount}</span></div><div class="text-gray-400">${t.date}</div>`;
+                list.appendChild(el);
             });
         }
 
-        // --- UTILS: MODAL & COPY & GOOGLE SHEET ---
-        function showResultModal(title, text) {
-            document.querySelector('#result-modal h3').textContent = title;
-            document.getElementById('copy-target').value = text;
-            document.getElementById('result-modal').classList.remove('hidden');
-        }
+        // --- MODAL & UTILS ---
+        function showResultModal(title, text) { document.querySelector('#result-modal h3').textContent = title; document.getElementById('copy-target').value = text; document.getElementById('result-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('result-modal').classList.add('hidden'); }
+        function copyText() { navigator.clipboard.writeText(document.getElementById('copy-target').value); alert('已複製'); }
 
-        function closeModal() {
-            document.getElementById('result-modal').classList.add('hidden');
-        }
-
-        function copyText() {
-            const copyText = document.getElementById("copy-target");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); // For mobile
-            
-            try {
-                navigator.clipboard.writeText(copyText.value).then(() => {
-                    alert("複製成功！");
-                });
-            } catch (err) {
-                // Fallback
-                document.execCommand('copy');
-                alert("複製成功！");
-            }
-        }
-
-        function syncToGoogleSheet(action, data) {
+        async function syncToGoogleSheet(action, data) {
             if(!appSettings.sheetUrl) return;
-
             const payload = new URLSearchParams();
             payload.append('action', action);
             payload.append('data', JSON.stringify(data));
-
-            fetch(appSettings.sheetUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: payload
-            }).then(() => {
-                console.log('Sent to Google Sheet');
-            }).catch(e => console.error('Sheet Sync Error', e));
+            try {
+                await fetch(appSettings.sheetUrl, { method: 'POST', mode: 'no-cors', body: payload });
+            } catch (e) {}
         }
 
-        // --- INIT ---
+        // Init UI
         document.getElementById('gsheet-url').value = appSettings.sheetUrl;
-        
-        // Initial load check
-        if(customers.length === 0 && products.length === 0) {
-            // Demo Data
-            customers.push({id: '1', name: '王小明', phone: '0912345678', address: '台北市信義區', balance: 500, joinedAt: new Date().toISOString()});
-            products.push({id: '1', name: '洗髮精', price: 300, category: '洗髮類', hidden: false});
-            products.push({id: '2', name: '護髮素', price: 450, category: '護髮類', hidden: false});
-            products.push({id: '3', name: '剪髮服務', price: 500, category: '服務', hidden: false});
-            localStorage.setItem('sm_customers', JSON.stringify(customers));
-            localStorage.setItem('sm_products', JSON.stringify(products));
-        }
     </script>
 </body>
 </html>
